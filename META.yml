@@ -1,0 +1,28 @@
+---
+name: Test-Group
+version: 0.02
+author:
+  - Dominique Quatravaux <dom@idealx.com>
+abstract: Group together related tests in a test suite
+license: perl
+requires:
+  Exporter: 0
+  File::Spec: 0
+  IO::File: 0
+  Test::Builder: 0
+  Test::More: 0
+  Test::Simple: 0.59
+build_requires:
+  File::Basename: 0
+  File::Find: 0
+provides:
+  Test::Builder::_HijackedByTestGroup:
+    file: lib/Test/Group.pm
+    version: 0.02
+  Test::Group:
+    file: lib/Test/Group.pm
+    version: 0.02
+  Test::Group::_Hijacker:
+    file: lib/Test/Group.pm
+    version: 0.02
+generated_by: Module::Build version 0.26

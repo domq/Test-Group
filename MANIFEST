@@ -1,0 +1,15 @@
+Build.PL
+Changes
+lib/Test/Group.pm
+Makefile.PL
+MANIFEST
+META.yml			# Will be created by "make dist"
+README
+t/00-load.t
+t/10-external.t
+t/20-internal.t
+t/30-synopsis.t
+t/lib/Test/Cmd.pm
+t/lib/testlib.pm
+t/pod-coverage.t
+t/pod.t
