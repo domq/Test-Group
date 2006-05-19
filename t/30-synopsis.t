@@ -1,6 +1,9 @@
 #!perl
 # -*- coding: utf-8; -*-
-use Test::More tests => 1; # Sorry, no_plan does not work with Perl 5.6.1
+use Test::More tests => 1; # Don't convert to no_plan: besides it not
+# being portable to Perl 5.6.1's Test::Harness, we also want to ensure
+# that the multiple tests in the synopsis get counted as one (since
+# they all run inside the same group).
 use Test::Group;
 use IO::File;
 use File::Spec;
@@ -32,7 +35,7 @@ test "synopsis" => sub {
     $snips{success} =~ s/(no_plan)/; # $1/;
 
     # "/tmp/log" is not kosher in win32:
-    $snips{misc} =~ s|/tmp/log|File::Spec->devnull|e;
+    $snips{misc} =~ s|/tmp/log|File::Spec->devnull|ge;
 
     ok(eval <<"CODE"); die $@ if $@;
 sub I_can_connect { 1 }

@@ -8,21 +8,19 @@
 
 =cut
 
-use Test::More tests => 32; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::More tests => 31; # Sorry, no_plan not portable for Perl 5.6.1!
 use lib "t/lib";
-BEGIN { use_ok('Test::Cmd') };
-use Config;
+use testlib;
+
 use strict;
 use warnings;
+
+ok(my $perl = perl_cmd);
 
 # FIXME: the tests below still perform too many verbatim string
 # comparisons, which makes the test suite fragile to changes in
 # Test::Harness.  Maybe we should use the real Test::Harness instead
 # of a Perl run through Test::Cmd?
-my $perl = Test::Cmd->new
-    (prog => join(' ', $Config{perlpath}, (map { ("-I", $_) } @INC), '-'),
-     workdir => '');
-ok $perl;
 
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 0, "passing test group";
 use Test::More tests=>1;

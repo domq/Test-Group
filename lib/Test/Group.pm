@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.02
+Test::Group version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -149,10 +149,6 @@ our $__reversed__;	# Test groups that should fail, will succeed if
                     # set to true, and vice versa. To be used *only*
                     # for self-tests below
 
-# Global variables stash. REFACTORME into an object - This stinks!
-our $failed;
-our $passed;
-
 my $verbose;
 my $skip_counter;
 my $skip_reason;
@@ -274,16 +270,23 @@ sub test($&) {
 		};
 	}
 
-	# For now we don't do anything specific with the collected
-	# statistics (number of sub-successes and sub-failures). All we
-	# want is to have no failing tests and at least one passing test:
-	my $ok= $subTest->successes() && ! $subTest->failures() &&
-        ! defined $exn;
+	my $ok= (! defined $exn) && $subTest->is_success();
 	$ok = !$ok if $__reversed__;
-	# Output compatible with Test::Harness
-	$Test->ok($ok, $name);
-	return $ok;
-
+    if (! $ok) {
+        $Test->ok(0, $name);
+        return 0;
+    } elsif (defined(my $todo = $subTest->todo_reasons())) {
+        # At least one subtest was a TODO so we are too. If one of the
+        # TODO subtests was an unexpected success then so are we.
+        no warnings "redefine";
+        local *Test::Builder::todo = sub { $todo };
+        $Test->ok($subTest->is_todo_unexpected_success(), $name);
+        return 1;
+    } else {
+        # Straight success, no TODO
+        $Test->ok(1, $name);
+        return 1;
+    }
 }
 
 =item B<skip_next_tests>
@@ -419,16 +422,6 @@ whole-script pragma.
 
 sub catch_exceptions { $catch_exceptions = 1; }
 sub dont_catch_exceptions { $catch_exceptions = 0; }
-
-=item I<failed()>
-
-Returns the number of test groups failed so far.
-
-=cut
-
-sub failed {
-	return $failed;
-}
 
 =item B<logfile($logfile)>
 
@@ -578,23 +571,57 @@ sub orig_blessed {
     return; # Construction in progress
 }
 
-=item I<successes()>
+=item I<is_success()>
 
-Returns the number of times L</ok> was called with a true first
-argument during the time $real_Test was L</hijack>ed.
+After the test group is run, and assuming it did not throw an
+exception, returns true iff this test group is to be considered a
+success.
 
-=cut
-
-sub successes { scalar grep { $_ } shift->summary() }
-
-=item I<failures()>
-
-Returns the number of times L</ok> was called with a false first
-argument during the time $real_Test was L</hijack>ed.
+For now we don't do anything specific with the collected statistics
+(number of sub-successes and sub-failures). All we want is to have no
+failing tests and at least one passing test.
 
 =cut
 
-sub failures { scalar grep { ! $_ } shift->summary() }
+sub is_success {
+    my ($self) = @_;
+    my $successes = scalar grep { $_ }   $self->summary();
+    my $failures  = scalar grep { ! $_ } $self->summary();
+    return ($successes && ! $failures);
+}
+
+=item I<todo_reasons()>
+
+After the test group is run, and assuming it did not throw an
+exception, returns a string comprised of any and all the reasons
+stipulated in the TODO blocks within (see L<Test::Builder/TODO:
+BLOCK>), or undef if no subtest ran inside such a TODO block.
+
+=cut
+
+sub todo_reasons {
+    my ($self) = @_;
+    my @todoreasons = map 
+        { ($_->{type} && $_->{type} eq "todo") ?
+              ($_->{reason}) : () } ($self->details);
+    return @todoreasons ? join(", ", @todoreasons) : undef;
+}
+
+=item i<is_todo_unexpected_success()>
+
+After the test group is run, and assuming it did not throw an
+exception, returns true iff at least one of the sub-tests run in a
+TODO block was an actual success.  This in turn causes the test group
+to itself report an unexpected success.
+
+=cut
+
+sub is_todo_unexpected_success {
+    my ($self) = @_;
+    return scalar grep
+        { $_->{type} && $_->{type} eq "todo" && $_->{actual_ok} }
+            ($self->details);
+}
 
 =item I<diag>
 

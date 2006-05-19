@@ -9,6 +9,7 @@ t/00-load.t
 t/10-external.t
 t/20-internal.t
 t/30-synopsis.t
+t/30-todotests.t
 t/lib/Test/Cmd.pm
 t/lib/testlib.pm
 t/pod-coverage.t

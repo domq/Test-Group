@@ -7,10 +7,8 @@ use warnings;
 
 =cut
 
-use Test::More tests => 5; # Don't convert to no_plan: besides no_plan
-# not being portable to Perl 5.6.1's Test::Harness, using an explicit
-# number of tests ensures that the tests in the L</SYNOPSIS> are not
-# counted.
+use Test::More tests => 5; # Sorry, no_plan does not work with Perl
+                           # 5.6.1's Test::Harness
 
 use Test::Group;
 use lib "t/lib";

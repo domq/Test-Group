@@ -11,6 +11,24 @@ testlib.pm - Utility functions for testing L<Test::More>.
 
 use strict;
 use warnings;
+use Test::Cmd;
+use Config;
+
+=item I<perl_cmd()>
+
+Returns a newly-constructed L<Test::Cmd> object using the Perl
+interpreter currently running as the command, with an @INC
+appropriately copied from the one we are currently running under.
+This is for testing live test snippets.
+
+=cut
+
+sub perl_cmd {
+    return Test::Cmd->new
+        (prog => join(' ', $Config{perlpath},
+                      (map { ("-I", $_) } @INC), '-'),
+         workdir => '');
+}
 
 =item I<begin_reversed_tests>
 

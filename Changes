@@ -1,6 +1,9 @@
 Revision history for Test-Group
 
-0.02    2006-05-XX
+0.03    2006-05-19
+        Support for TODO sub-tests
+
+0.02    2006-05-05
         First release to CPAN
 
 0.01    2004-06-11
