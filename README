@@ -1,8 +1,8 @@
 DESCRIPTION
 
-This is Test::Group version 0.02, a companion module to Test::Builder.
-It allows to lump tests and fixture into groups that make sense
-together.  For example:
+This is Test::Group, a companion module to Test::Builder.  It allows
+to lump tests and fixture into groups that make sense together.  For
+example:
 
     use Test::More tests => 1;
     use Test::Group;

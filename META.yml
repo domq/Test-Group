@@ -1,8 +1,8 @@
 ---
 name: Test-Group
-version: 0.03
+version: 0.04
 author:
-  - Dominique Quatravaux <dom@idealx.com>
+  - 'Dominique Quatravaux <dom@idealx.com>'
 abstract: Group together related tests in a test suite
 license: perl
 requires:
@@ -18,11 +18,11 @@ build_requires:
 provides:
   Test::Builder::_HijackedByTestGroup:
     file: lib/Test/Group.pm
-    version: 0.03
+    version: 0.04
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.03
+    version: 0.04
   Test::Group::_Hijacker:
     file: lib/Test/Group.pm
-    version: 0.03
+    version: 0.04
 generated_by: Module::Build version 0.26

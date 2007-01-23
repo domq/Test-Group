@@ -7,7 +7,7 @@ use warnings;
 
 =cut
 
-use Test::More tests => 5; # Sorry, no_plan does not work with Perl
+use Test::More tests => 6; # Sorry, no_plan does not work with Perl
                            # 5.6.1's Test::Harness
 
 use Test::Group;
@@ -32,6 +32,8 @@ test "failure" => sub {
 test "exception" => sub {
     die;
 };
+
+test "empty (shall fail)" => sub { };
 
 end_reversed_tests();
 

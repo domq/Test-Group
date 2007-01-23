@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.03
+Test::Group version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -140,14 +140,14 @@ without changing one's programming style too much.
 use 5.004;
 
 use Test::Builder;
-BEGIN { die "Test::Simple version 0.59 or superior needed, sorry"
+BEGIN { die "Need Test::Simple version 0.59 or later, sorry"
             unless Test::Builder->can("create"); }
 use IO::File;
 use File::Spec;
 
 our $__reversed__;	# Test groups that should fail, will succeed if
                     # set to true, and vice versa. To be used *only*
-                    # for self-tests below
+                    # for self-tests.
 
 my $verbose;
 my $skip_counter;
@@ -255,18 +255,22 @@ sub test($&) {
     # Pfew. Critical section is over.
 
 	if (defined $exn) {
+        my $exntext =
+            ( ! defined $exn ? "an undefined exception" :
+              eval { $exn->can("stringify") } ? $exn->stringify :
+              (ref($exn) && $Data::Dumper::VERSION ) ? do {
+                  no warnings "once";
+                  local $Data::Dumper::Indent = 1;
+                  local $Data::Dumper::Terse = 1;
+                  Data::Dumper::Dumper($exn) } :
+               "$exn" ? "$exn" : "a blank exception" );
 		if ($logfd) {
-			print $logfd ("Test ``$name'' died with exception".
-			  (! defined $exn ? "(undef)" : "\n$exn\n"));
 			$name="test ``$name'' died - see log file: ``$logfile''";
+			print $logfd ("Test ``$name'' died:\n" . $exntext . "\n");
 		} else {
 			# Output diagnostics on one line after the failure message
-			my $message = (! defined $exn ? "an undefined exception" :
-						   "$exn" ? "$exn" :
-						   (UNIVERSAL::can($exn, "stringify") ?
-							$exn->stringify() : "an empty exception"));
-			chomp $message;
-			$name="test ``$name'' died with ``$message''";
+            $exntext =~ s|\n| / |g;
+			$name="test ``$name'' died with ``$exntext''";
 		};
 	}
 
@@ -289,7 +293,7 @@ sub test($&) {
     }
 }
 
-=item B<skip_next_tests>
+=item I<skip_next_tests>
 
     skip_next_tests 5;
     skip_next_tests 5, "reason";
@@ -297,7 +301,7 @@ sub test($&) {
 Skips the 5 following group of tests. Dies if we are currently
 skipping tests already.
 
-=item B<skip_next_test>
+=item I<skip_next_test>
 
     skip_next_test;
     skip_next_test "reason";
@@ -307,7 +311,7 @@ Equivalent to:
     skip_next_tests 1;
     skip_next_tests 1, "reason";
 
-=item B<begin_skipping_tests>
+=item I<begin_skipping_tests>
 
     begin_skipping_tests
     begin_skipping_tests "reason";
@@ -316,7 +320,7 @@ Skips all subsequent groups of tests until blocked by
 L</end_skipping_tests>. Dies if we are currently skipping tests
 already.
 
-=item B<end_skipping_tests>
+=item I<end_skipping_tests>
 
 Cancels the effect of L</begin_skipping_tests>. Has no effect if we
 are not currently skipping tests.
@@ -423,7 +427,7 @@ whole-script pragma.
 sub catch_exceptions { $catch_exceptions = 1; }
 sub dont_catch_exceptions { $catch_exceptions = 0; }
 
-=item B<logfile($logfile)>
+=item I<logfile($logfile)>
 
 Sets the log file for caught exceptions to F<$logfile>.  From this
 point on, all exceptions thrown from within a text group (assuming
@@ -716,14 +720,15 @@ instead.
 
 =head1 SEE ALSO
 
-L<Test::Simple>, L<Test::More>, L<Test::Builder>, and friends; the
-per-qa mailing list (<>).
+L<Test::Simple>, L<Test::More>, L<Test::Builder>, and friends
+
+The C<perl-qa> project, L<http://qa.perl.org/>.
 
 =head1 AUTHORS
 
 Dominique Quatravaux <dom@idealx.com>
 
-Nicolas M. Thiéry <nthiery@users.sf.net>
+Nicolas M. Thie'ry <nthiery@users.sf.net>
 
 =head1 LICENSE
 

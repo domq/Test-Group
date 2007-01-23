@@ -8,7 +8,7 @@
 
 =cut
 
-use Test::More tests => 31; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::More tests => 33; # Sorry, no_plan not portable for Perl 5.6.1!
 use lib "t/lib";
 use testlib;
 
@@ -205,21 +205,14 @@ test "group 2", sub {
     ok 1;
 };
 EOSCRIPT
-is $perl->stdout(), <<"EOOUT" or warn $perl->stderr;
-1..2
-not ok 1 - test ``group 1'' died - see log file: ``$logfile''
-ok 2 - group 2
-EOOUT
+like $perl->stdout(), qr/^not ok 1.*test.*group 1.*died.*log/m;
+like $perl->stdout(), qr/^ok 2/m;
 
 my $contents;
 $perl->read(\$contents, 'log');
-is $contents, <<EOLOG, "log file";
-Test ``group 1'' died with exception
-line1
-line2
-line3 at - line 7.
+like($contents, qr/group 1.*died/, "log file 1/2");
 
-EOLOG
+like($contents, qr/line1\nline2\nline3/, "log file 2/2");
 
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 1, "nested tests";
 use Test::More tests => 2;
