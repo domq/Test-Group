@@ -1,16 +1,8 @@
 #!perl
 # -*- coding: utf-8; -*-
-use Test::More tests => 1; # Don't convert to no_plan: besides it not
-# being portable to Perl 5.6.1's Test::Harness, we also want to ensure
-# that the multiple tests in the synopsis get counted as one (since
-# they all run inside the same group).
-use Test::Group;
-use IO::File;
-use File::Spec;
+
 use strict;
 use warnings;
-use lib "t/lib";
-use testlib;
 
 =head1 NAME
 
@@ -19,37 +11,64 @@ documentation and runs it.
 
 =cut
 
-my $source = join("", IO::File->new($INC{"Test/Group.pm"})->getlines);
+use Test::More tests => 15;  # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::Group;
+use File::Spec;
+use lib "t/lib";
+use testlib;
 
-my %snips = map {
-    my $name = $_;
-    my ($snip) = ($source =~
-m/=for tests "synopsis-$name" begin(.*)=for tests "synopsis-$name" end/s);
 
-    ( $name => $snip )
-} (qw(success fail misc));
+my %snips = map { ( $_ => get_pod_snippet("synopsis-$_") ) }
+    (qw(success fail misc TODO));
 
-test "synopsis" => sub {
+# We already have a plan:
+$snips{success} =~ s/(no_plan)/; # $1/;
 
-    # We already have a plan:
-    $snips{success} =~ s/(no_plan)/; # $1/;
+# "/tmp/log" is not kosher in win32:
+$snips{misc} =~ s|/tmp/log|File::Spec->devnull|ge;
 
-    # "/tmp/log" is not kosher in win32:
-    $snips{misc} =~ s|/tmp/log|File::Spec->devnull|ge;
-
-    ok(eval <<"CODE"); die $@ if $@;
+# Instrument for test:
+foreach (values %snips) {
+    s/^\s+test /\$results[scalar \@results] = test_test /gm
+        or die "Could not find any test in this snippet!";
+}
+my (@successes, @failures, @todos);
+ok(eval <<"CODE"); die $@ if $@;
 sub I_can_connect { 1 }
 sub I_can_make_a_request { 1 }
 
-$snips{success}
+my \@results;
 
-begin_reversed_tests();
+$snips{success}
+push(\@successes, \@results); \@results = ();
+
 $snips{fail}
-end_reversed_tests();
+push(\@failures, \@results); \@results = ();
+
+$snips{TODO}
+push(\@todos, \@results); \@results = ();
 
 sub Network::available { 0 } # Curse France Telecom, arrrr!
 $snips{misc}
+push(\@successes, \@results); \@results = ();
 
 1;
 CODE
-};
+
+grep {
+     my $success = $_;
+     ok(! $success->is_failed, "success is_failed");
+     ok($success->prints_OK, "success prints_OK");
+} @successes;
+
+grep {
+     my $failure = $_;
+     ok($failure->is_failed, "failure is_failed");
+     ok(! $failure->prints_OK, "failure prints_OK");
+} @failures;
+
+grep {
+     my $todo = $_;
+     ok(! $todo->is_failed, "todo is_failed");
+     ok(! $todo->prints_OK, "todo prints_OK");
+} @todos;

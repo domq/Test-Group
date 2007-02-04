@@ -30,33 +30,101 @@ sub perl_cmd {
          workdir => '');
 }
 
-=item I<begin_reversed_tests>
+=item I<test_test>
 
-A support routine for testing the failure of tests. When
-I<begin_reversed_tests> is called, failure means success from now on
-and vice versa.  Kids, don't try this at home: this is only for
-testing Test::Group itself! In all other situations you should
-rewrite your tests so that success actually means success.
+Works like L<Test::Group/test>, except that the result of the test is
+not sent upwards to L<Test::Builder> but instead returned as a
+reference to an instance of <Test::Group/Test::Group::_Runner internal
+class>. E.g. here is how to check that a test group does B<not> pass:
+
+   my $status = test_test "foo" => sub {
+      # ...
+   };
+   ok($status->is_failed);
+
+Also, test diagnostic is suppressed in I<test_test> unless $ENV{DEBUG}
+is set.
 
 =cut
 
-sub begin_reversed_tests {
-    $Test::Group::__reversed__ = 1;
-    # Temporarily diverts the diagnostics /dev/null, so as not
-    # to confuse our own test output with failure diagnostics that
-    # actually indicate success (if you know what I mean):
-    Test::Builder->new->no_diag(1);
+sub test_test ($&) {
+    my ($name, $sub) = @_;
+
+    # This is just a dummy adapter to protect the test suite
+    # against future changes of Test::Group's internals.
+    my $subtest = Test::Group::_Runner->new($name, $sub);
+    $subtest->mute(1);
+    $subtest->run;
+    return $subtest;
 }
 
-=item I<end_reversed_tests>
+=item I<get_pod_snippet($name)>
 
-Cancels the effect of L</begin_reversed_tests>.
+Parses the source code of L<Test::Group> and extracts the snippets of
+code that are in the POD therein, identified by C<=for tests> markers.
 
 =cut
 
-sub end_reversed_tests {
-    Test::Builder->new->no_diag(0);
-    $Test::Group::__reversed__ = undef;
+use IO::File;
+sub get_pod_snippet {
+    my ($name) = @_;
+    my $source = join("", IO::File->new($INC{"Test/Group.pm"})->getlines);
+
+    my ($snip) = ($source =~
+                  m/=for tests "$name" begin(.*)=for tests "$name" end/s);
+    die "Did not find snippet $name" if (! defined $snip);
+    return $snip;
+}
+
+=back
+
+=head2 Mixins to Test::Group::_Runner
+
+I<testlib.pm> defines additional methods for the
+L<Test::Group/Test::Group::_Runner internal class>, which are trivial
+wrappers around the API that that class already provides and only
+exist to make the test suite more easy to read and write.
+
+=over
+
+=item I<Test::Group::_Runner::prints_OK()>
+
+=item I<Test::Group::_Runner::prints_TODO_string()>
+
+Return respectively the first and second items from the list returned
+by L<Test::Group/as_Test_Builder_params>, except if
+L<Test::Group/is_skipped> is true in which case they return
+respectively 1 and undef.
+
+=cut
+
+sub Test::Group::_Runner::prints_OK {
+    my $self = shift;
+    return 1 if $self->is_skipped;
+    my ($retval, undef) = $self->as_Test_Builder_params;
+    return $retval;
+}
+
+sub Test::Group::_Runner::prints_TODO_string {
+    my $self = shift;
+    return if $self->is_skipped;
+    my (undef, $retval) = $self->as_Test_Builder_params;
+    return $retval;
+}
+
+
+=item I<Test::Group::_Runner::is_failed()>
+
+Returns true iff this test group failed from the point of view of
+L<Test::Harness>.  This is computed from the negation of the C<xor> of
+L</prints_OK> and L</prints_TODO_string>, just as I<Test::Harness>
+would.
+
+=cut
+
+sub Test::Group::_Runner::is_failed {
+    my ($self) = @_;
+    return ! ($self->prints_TODO_string xor $self->prints_OK);
 }
 
 =back

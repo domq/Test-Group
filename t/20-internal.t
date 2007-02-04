@@ -7,7 +7,7 @@ use warnings;
 
 =cut
 
-use Test::More tests => 6; # Sorry, no_plan does not work with Perl
+use Test::More tests => 8; # Sorry, no_plan does not work with Perl
                            # 5.6.1's Test::Harness
 
 use Test::Group;
@@ -21,30 +21,34 @@ test "success" => sub {
 };
 
 
-begin_reversed_tests();
-test "failure" => sub {
+my $status = test_test "failure" => sub {
     ok(1);
     ok(1);
     ok(0);
     ok(1);
 };
 
-test "exception" => sub {
+ok($status->is_failed, "failed test");
+
+$status = test_test "exception" => sub {
     die;
 };
+ok($status->is_failed, "exception causes failure");
+ok(! $status->prints_OK);
 
-test "empty (shall fail)" => sub { };
-
-end_reversed_tests();
+$status = test_test "empty (shall fail)" => sub { };
+ok($status->is_failed, "empty test fails");
 
 test "nested tests" => sub {
     pass;
     test "true" => sub { pass };
+};
 
-    begin_reversed_tests();
+$status = test_test "nested failed tests" => sub {
+    test "true" => sub { pass };
     test "false" => sub { is("foo", "bar") };
     test "dies" => sub { die };
-    end_reversed_tests();
 };
+ok($status->is_failed);
 
 1;

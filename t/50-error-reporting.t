@@ -1,0 +1,49 @@
+#!perl -w
+
+use strict;
+
+=head1 NAME
+
+50-error-reporting.t - Checks that error messages from L<Test::More>
+appear to originate from the correct locations in the call stack.
+
+=cut
+
+use Test::More  tests => 5; # Sorry, no_plan not portable for Perl 5.6.1!
+
+use File::Temp qw(tempdir);
+my $tempdir = tempdir
+    ("Test-Group-XXXXXX",
+     TMPDIR => 1, ($ENV{DEBUG} ? () : (CLEANUP => 1)));
+
+use File::Slurp qw(write_file);
+use File::Spec::Functions qw(catfile);
+my $scriptfile = catfile($tempdir, "test.pl");
+write_file($scriptfile, <<"TEST_SCRIPT");
+use Test::More tests => 1;               # line 1
+use Test::Group;                         # line 2
+use lib "t/lib";                         # line 3
+use Test::Cmd;                           # line 4
+                                         # line 5
+test "this fails" => sub {               # line 6
+    ok(0, "oops");                       # line 7
+};                                       # line 8
+
+TEST_SCRIPT
+
+use Config qw(%Config);
+use lib "t/lib";
+use Test::Cmd;
+
+ok(my $perl = Test::Cmd->new
+        (prog => join(' ', $Config{perlpath},
+                      (map { ("-I", $_) } @INC), $scriptfile),
+         workdir => ''));
+
+isnt($perl->run(stdin => ""), 0, "failing test");
+like($perl->stdout, qr/not ok 1/, "test marked failed");
+like($perl->stderr, qr/oops.*\n.*$scriptfile.*line 7/,
+     "sub-test failure reported at the correct line");
+like($perl->stderr, qr/this fails.*\n.*$scriptfile.*line 8/,
+    "group failure reported at the correct line");
+

@@ -26,12 +26,12 @@ is $perl->run(stdin => <<'EOSCRIPT') >> 8, 0, "passing test group";
 use Test::More tests=>1;
 use Test::Group;
 test      "group", sub {
-	ok 1;
-	like   "blah blah blah", qr/bla/;
-	unlike "blah blah blah", qr/bli/;
-	foreach my $i (0..5) {
-		cmp_ok $i**2, '==', $i*$i;
-	}
+    ok 1;
+    like   "blah blah blah", qr/bla/;
+    unlike "blah blah blah", qr/bli/;
+    foreach my $i (0..5) {
+        cmp_ok $i**2, '==', $i*$i;
+    }
 };
 EOSCRIPT
 is $perl->stdout(), <<EOOUT;
@@ -44,10 +44,10 @@ is $perl->run(stdin => <<'EOSCRIPT') >> 8, 1, "failing test group";
 use Test::More tests=>1;
 use Test::Group;
 test      "group", sub {
-	is "bla", "ble";
-	ok 0, "sub test blah";
-	ok 0;
-	like   "blah blah blah", qr/bli/;
+    is "bla", "ble";
+    ok 0, "sub test blah";
+    ok 0;
+    like   "blah blah blah", qr/bli/;
 };
 EOSCRIPT
 is $perl->stdout(), <<EOOUT;
