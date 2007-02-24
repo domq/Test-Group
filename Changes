@@ -1,5 +1,9 @@
 Revision history for Test-Group
 
+0.06    2007-02-04
+        Minor tweaks to the pretty-printing of exceptions
+        Some code and test cleanups
+
 0.05    2007-02-04
         Major overhaul of the internals; turned into an object class
         Fixed support for TODO sub-tests; added support for skipping

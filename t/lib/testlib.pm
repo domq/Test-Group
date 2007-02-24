@@ -42,8 +42,8 @@ class>. E.g. here is how to check that a test group does B<not> pass:
    };
    ok($status->is_failed);
 
-Also, test diagnostic is suppressed in I<test_test> unless $ENV{DEBUG}
-is set.
+Also, test diagnostics are suppressed in I<test_test> unless
+$ENV{DEBUG} is set.
 
 =cut
 
@@ -53,7 +53,7 @@ sub test_test ($&) {
     # This is just a dummy adapter to protect the test suite
     # against future changes of Test::Group's internals.
     my $subtest = Test::Group::_Runner->new($name, $sub);
-    $subtest->mute(1);
+    $subtest->mute(1) unless $ENV{DEBUG};
     $subtest->run;
     return $subtest;
 }

@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.05
+Test::Group version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -369,9 +369,14 @@ sub test ($&) {
                   Data::Dumper::Dumper($exn) } :
                "$exn" ? "$exn" : "a blank exception" );
         if ($classstate_logfd) {
-            $name = "test ``$name'' died - see log file: ``$classstate_logfile''";
-            print $classstate_logfd ("Test ``$name'' died:\n" . $exntext . "\n");
+            print $classstate_logfd <<"MESSAGE";
+Test ``$name'' died:
+$exntext
+MESSAGE
+            $name = "test ``$name'' died - "
+                    . "see log file: ``$classstate_logfile''";
         } else {
+            { local $/ = ""; chomp($exntext); }
             # Output diagnostics on one line after the failure message
             $exntext =~ s|\r||g; $exntext =~ s|\n+| / |g;
             $name = "test ``$name'' died with ``$exntext''";
@@ -528,12 +533,13 @@ sub dont_catch_exceptions { $classstate_catchexceptions = 0; }
 
 =item I<logfile($classstate_logfile)>
 
-Sets the log file for caught exceptions to F<$classstate_logfile>.  From this
-point on, all exceptions thrown from within a text group (assuming
-they are caught, see L</catch_exceptions>) will be written to
-F<$classstate_logfile> instead of being passed on to L<Test::More/diag>. This is
-very convenient with exceptions with a huge text representation (say
-an instance of L<Error> containing a stack trace).
+Sets the log file for caught exceptions to F<$classstate_logfile>.
+From this point on, all exceptions thrown from within a text group
+(assuming they are caught, see L</catch_exceptions>) will be written
+to F<$classstate_logfile> instead of being passed on to
+L<Test::More/diag>. This is very convenient with exceptions with a
+huge text representation (say an instance of L<Error> containing a
+stack trace).
 
 =cut
 
@@ -732,7 +738,7 @@ sub ok {
 
     # Coerce the arguments into being actual scalars (not objects)
     $status = $status ? 1 : 0;
-    $testname = substr($testname, 0) if defined $testname;
+    $testname = substr($testname, 0) if defined $testname; # Stringifies
 
     # Use the actual Test::Builder->todo to get at the TODO status.
     # This is both elegant and necessary for recursion, because
@@ -742,7 +748,7 @@ sub ok {
     my($pack, $file, $line) = $T->caller;
     my $todo = $T->todo($pack);
     if (defined $todo) {
-        $todo = substr($todo, 0);
+        $todo = substr($todo, 0); # Stringifies
         $todo = undef if $todo eq "0";  # Yes, that's how
                                         # Test::Builder->todo works.
     }
@@ -773,6 +779,21 @@ sub skip {
     push @{$self->{subtests}}, { status => 1 };
 }
 
+=item I<diag(@messages)>
+
+Called from within the group subs by virtue of
+L</Test::Builder::_HijackedByTestGroup internal class> delegating it
+to us.  If this runner object is L</mute>, does nothing; otherwise,
+works like L<Test::Builder/diag>.
+
+=cut
+
+sub diag {
+    my ($self, @msgs) = @_;
+    return if ($self->{mute});
+    my $origdiag = Test::Builder->can("diag");
+    $origdiag->(Test::Builder->new, @msgs);
+}
 
 =item I<subtests()>
 
@@ -983,8 +1004,8 @@ sub _hijack {
     }
 
     # The following line of code must be executed immediately after
-    # the reblessing above, as the delegating logic (L</AUTOLOAD>
-    # below) needs ->current() to be set to work:
+    # the reblessing above, as the delegating stubs (L</ok>, L</skip>
+    # and L</diag> below) need ->current() to be set to work:
     $class->current($self);
 }
 
@@ -1062,57 +1083,38 @@ sub _make_todo_string {
 
 =head2 Test::Builder::_HijackedByTestGroup internal class
 
-This is an internal class used as an accomplice by L</_hijack> to
-hijack the method calls sent to the Test::Builder singleton (see
-L<Test::Builder/new>) by the various testing modules from the CPAN,
-e.g. L<Test::More>, L<Test::Pod> and friends.  It works almost the
-same as the real thing, except for one method call:
+This is an internal subclass of L<Test::Builder> used as an accomplice
+by L</_hijack> to hijack the method calls performed upon the
+Test::Builder singleton (see L<Test::Builder/new>) by the various
+testing modules from the CPAN, e.g. L<Test::More>, L<Test::Pod> and
+friends.  It works almost the same as the real thing, except for the
+following method calls:
 
 =over
 
 =cut
 
 package Test::Builder::_HijackedByTestGroup;
-
-sub AUTOLOAD {
-    my ($self) = @_;
-    my (undef, $methname) = (our $AUTOLOAD =~ m/^(.*)::(.*?)$/);
-
-    return if ($methname eq "DESTROY"); # Don't mess with this one. Ever.
-
-    my $origpack = Test::Group::_Runner->current->orig_blessed;
-    if (my $meth = $origpack->can($methname)) {
-        goto $meth; # No need to alter @_ for once, we *are* the
-                    # delegated object (albeit from a different class)
-    } else {
-        die sprintf(qq{Can't locate class method "%s" via package "%s"},
-                    $methname, $origpack);
-    }
-}
+use base "Test::Builder";
 
 =item I<ok>
 
 =item I<skip>
+
+=item I<diag>
 
 These methods are delegated to the L</current> instance of
 I<Test::Group::_Runner>.
 
 =cut
 
-sub ok {
-    my $self = shift;
-    unshift @_, ( Test::Group::_Runner->current );
-    goto &Test::Group::_Runner::ok;
-}
-
-
-# FIXME: this is the very same code as above.  I should meta-program
-# both instead to refactor.
-
-sub skip {
-    my $self = shift;
-    unshift @_, ( Test::Group::_Runner->current );
-    goto &Test::Group::_Runner::skip;
+foreach my $delegated (qw(ok skip diag)) {
+    no strict "refs";
+    *{$delegated} = sub {
+        my $self = shift;
+        unshift(@_, Test::Group::_Runner->current);
+        goto &{"Test::Group::_Runner::".$delegated};
+    };
 }
 
 =back
@@ -1138,16 +1140,16 @@ The C<perl-qa> project, L<http://qa.perl.org/>.
 
 L<Test::Class> can be used to turn a test suite into a full-fledged
 object class of its own, in xUnit style.  It also happens to support a
-similar form of test grouping using the C<:Tests> attribute
-(introduced in version 0.10).  Switching over to I<Test::Class> will
-make a test suite more rugged and provide a number of advantages, but
-it will also dilute the "quick-and-dirty" aspect of .t files
-somewhat. This may or may not be what you want: for example, the
-author of this module enjoys programming most when writing tests,
-because the most infamous Perl hacks are par for the course then :-).
-Anyway TIMTOWTDI, and I<Test::Group> is a way to reap some of the
-benefits of I<Test::Class> (e.g. running only part of the test suite)
-without changing one's programming style too much.
+similar form of test grouping using the C<:Test(no_plan)> or C<:Tests>
+attributes.  Switching over to I<Test::Class> will make a test suite
+more rugged and provide a number of advantages, but it will also
+dilute the "quick-and-dirty" aspect of .t files somewhat. This may or
+may not be what you want: for example, the author of this module
+enjoys programming most when writing tests, because the most infamous
+Perl hacks are par for the course then :-).  Anyway TIMTOWTDI, and
+I<Test::Group> is a way to reap some of the benefits of I<Test::Class>
+(e.g. running only part of the test suite) without changing one's
+programming style too much.
 
 =head1 AUTHORS
 
