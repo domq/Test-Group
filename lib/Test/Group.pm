@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.06
+Test::Group version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -340,7 +340,7 @@ The return value of I<test> is 1 if the test group is a success
 (including a TODO unexpected success), 0 if it is a failure (including
 a TODO excused failure), and undef if the test group was skipped.
 
-=cut "
+=cut
 
 sub test ($&) {
     my ($name, $code) = @_;
@@ -368,19 +368,19 @@ sub test ($&) {
                   local $Data::Dumper::Terse = 1;
                   Data::Dumper::Dumper($exn) } :
                "$exn" ? "$exn" : "a blank exception" );
-        if ($classstate_logfd) {
-            print $classstate_logfd <<"MESSAGE";
+        { local $/ = ""; chomp($exntext); }
+        my $message = <<"MESSAGE";
 Test ``$name'' died:
 $exntext
 MESSAGE
-            $name = "test ``$name'' died - "
-                    . "see log file: ``$classstate_logfile''";
+        if ($classstate_logfd) {
+            print $classstate_logfd $message;
+            $Test->diag("test ``$name'' died - "
+                    . "see log file: ``$classstate_logfile''");
         } else {
-            { local $/ = ""; chomp($exntext); }
-            # Output diagnostics on one line after the failure message
-            $exntext =~ s|\r||g; $exntext =~ s|\n+| / |g;
-            $name = "test ``$name'' died with ``$exntext''";
+            $Test->diag($message);
         };
+        $name = "*died* $name";
     }
 
     no warnings "redefine";
@@ -429,7 +429,7 @@ already.
 Cancels the effect of L</begin_skipping_tests>. Has no effect if we
 are not currently skipping tests.
 
-=cut "
+=cut
 
 sub skip_next_tests {
     my ($counter, $reason) = @_;
@@ -634,27 +634,23 @@ sub run {
 
     my ($exn);
 
-    # Locally sets $TODO to undef, see POD snippet "TODO gotcha 2".
     my ($callerpack) = caller(1); # Accounting for one stack frame for
                                   # L</test>
-    no strict 'refs'; local ${$callerpack . '::TODO' };
 
-    # WARNING, we are entering a very quirky kind of critical section:
-    # there shall be no way of exiting the block below (through normal
-    # control flow or exception) without calling $self->_unhijack()!
-    $self->_hijack();
-    eval { $self->{code}->(); 1; } or do {
+    $self->_hijack();    # BEGIN CRITICAL SECTION
+    my $exception_raised = !
+        $self->_run_with_local_TODO($callerpack, $self->{code});
+    $self->_unhijack();  # END CRITICAL SECTION
+
+    if ($exception_raised) {
         if ($classstate_catchexceptions) {
             $self->_record_exception();
         } else {
-            $self->_unhijack();
             die $@; # Rethrow
         }
-    };
-    $self->_unhijack();
-    # Pfew. Critical section is over.
+    }
 
-    return; # No specified return value yet
+    return; # No useful return value yet
 }
 
 =item I<current()>
@@ -1027,6 +1023,36 @@ sub _unhijack {
         $self->current($self->{parent});
     }
     1;
+}
+
+=item I<_run_with_local_TODO($callerpack, $sub)>
+
+Invokes the test sub $sub while temporarily setting the variable
+C<${${callerpack}::TODO}> to undef, thereby implementing the
+local-TODO semantics described in L</TODO Tests>.  Returns true if
+$sub completed, and false if $sub threw an exception (that is
+thereafter available in $@ as usual).
+
+I<_run_with_local_TODO> is guaranteed not to throw an exception
+itself, so that it is safe to use it in a critical section opened by
+calling L</_hijack> and closed by calling L</_unhijack>.
+
+=cut
+
+sub _run_with_local_TODO {
+    my ($self, $callerpack, $sub) = @_;
+    ## Locally sets $TODO to undef, see POD snippet "TODO gotcha 2".
+    ## I used to do
+    #     no strict 'refs';
+    #     local ${$callerpack . '::TODO' };
+    ## but this doesn't work in 5.6 ("Can't localize through a reference")
+    my $TODOref = do { no strict "refs"; \${$callerpack . '::TODO' } };
+    my $TODOorig = $$TODOref;
+    $$TODOref = undef;
+
+    my $retval = eval { $sub->(); 1; };
+    $$TODOref = $TODOorig;
+    return $retval;
 }
 
 =item I<_skip($reason)>

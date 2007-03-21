@@ -41,9 +41,9 @@ ok(my $perl = Test::Cmd->new
          workdir => ''));
 
 isnt($perl->run(stdin => ""), 0, "failing test");
-like($perl->stdout, qr/not ok 1/, "test marked failed");
-like($perl->stderr, qr/oops.*\n.*$scriptfile.*line 7/,
+like(scalar($perl->stdout), qr/not ok 1/, "test marked failed");
+like(scalar($perl->stderr), qr/oops.*\n.*$scriptfile.*line 7/,
      "sub-test failure reported at the correct line");
-like($perl->stderr, qr/this fails.*\n.*$scriptfile.*line 8/,
+like(scalar($perl->stderr), qr/this fails.*\n.*$scriptfile.*line 8/,
     "group failure reported at the correct line");
 

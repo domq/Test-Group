@@ -33,10 +33,10 @@ EOSCRIPT
     or warn $perl->stderr;
 
 
-like($perl->stdout, qr/ok 1/);
-unlike($perl->stdout, qr/skip/,
+like(scalar($perl->stdout), qr/ok 1/);
+unlike(scalar($perl->stdout), qr/skip/,
        "the *outer* test is a straight success");
-unlike($perl->stdout, qr/ok 2/, "Sub-skipping doesn't fubar test count");
+unlike(scalar($perl->stdout), qr/ok 2/, "Sub-skipping doesn't fubar test count");
 
 =pod
 

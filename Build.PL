@@ -26,6 +26,7 @@ my $builder = Module::Build->new
        'Test::Builder' => 0,
        'Test::More' => 0,
        'File::Spec' => 0,
+       'File::Slurp' => 0,
        'IO::File' => 0,
       },
       build_requires     =>
@@ -40,6 +41,27 @@ my $builder = Module::Build->new
     add_to_cleanup      => [ 'Test-Group-*' ],
     create_makefile_pl  => 'traditional', # Makes Module::Build optional
 );
+
+# Fixes an @INC ordering problem dug up by CPAN testers, that causes
+# Module::Build's version detection algorithm to fail; see
+# http://www.nntp.perl.org/group/perl.cpan.testers/2007/02/msg422771.html
+if ( (! ($builder->prereq_failures &&
+         $builder->prereq_failures->{requires}->{"Test::Simple"})) &&
+     (`$^X -MTest::Builder -e 'print "ok" if Test::Builder->can("create");'`
+      !~ m/ok/) ) {
+    die <<"MESSAGE";
+
+ERROR IN PREREQUISITES
+There appears to be several versions of Test::Builder installed on your
+system, and I am not picking up the most recent one; Test::Group will not
+work in this situation.
+
+Please uninstall the oldest version of Test::Builder on your system,
+or otherwise rearrange the modules so that a recent version of
+Test::Builder comes first in \@INC (@INC)
+
+MESSAGE
+}
 
 $builder->create_build_script();
 

@@ -27,8 +27,8 @@ test "an exception" => sub {
 EOSCRIPT
 
 is $perl->run(stdin => $script) >> 8, 1, "throwing an exception object w/o a test group";
-like($perl->stdout, qr/^not ok 1.*died with.*Error::SNAFU/m,
-     "exception object is dumped on a single line"); # coz no /s modifier
+like(scalar($perl->stdout), qr/^not ok 1/m,
+     "exception objects also cause the group to fail");
 
 my $logfile = $perl->workpath("log"); unlink($logfile);
 $script = "use Data::Dumper;\n" . $script;
@@ -36,9 +36,9 @@ $script =~ s/(use Test::Group;)/$1Test::Group->logfile("$logfile");/;
 
 is($perl->run(stdin => $script) >> 8, 1, "throwing an exception object into the log file");
 
-like($perl->stdout, qr/^not ok 1.*see log/m)
+like(scalar($perl->stderr), qr/see log/m)
     or warn $perl->stderr;
-unlike($perl->stdout, qr/SNAFU/);
+unlike(scalar($perl->stdout), qr/SNAFU/);
 
 my $contents;
 $perl->read(\$contents, 'log') or die "cannot read logfile";

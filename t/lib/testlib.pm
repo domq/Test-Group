@@ -87,9 +87,9 @@ exist to make the test suite more easy to read and write.
 
 =over
 
-=item I<Test::Group::_Runner::prints_OK()>
+=head3 prints_OK
 
-=item I<Test::Group::_Runner::prints_TODO_string()>
+=head3 prints_TODO_string
 
 Return respectively the first and second items from the list returned
 by L<Test::Group/as_Test_Builder_params>, except if

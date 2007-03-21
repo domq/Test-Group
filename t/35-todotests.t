@@ -242,8 +242,8 @@ for(1..10) { foobar_ok("foobar") }
 TEST_CASE
     is $perl->run(stdin => $code) >> 8, 0, "foobar_ok"
         or warn $perl->stderr;
-    unlike($perl->stderr(), qr/not ok/, "success");
-    unlike($perl->stderr(), qr/11/, "correct number of tests");
+    unlike(scalar($perl->stderr()), qr/not ok/, "success");
+    unlike(scalar($perl->stderr()), qr/11/, "correct number of tests");
 }
 
 =head2 POD snippets in L<Test::Group/TODO Tests>
@@ -324,8 +324,8 @@ test "TODO sub-test (normal i.e. failing)" => sub {
 
 TODO_FAILING
 
-like $perl->stdout(), qr/not ok 1.*# TODO /,
+like scalar($perl->stdout()), qr/not ok 1.*# TODO /,
     "would nonetheless be treated as a success by Test::Harness";
-like $perl->stdout(), qr/Not quite there yet.*Need more budget/,
+like scalar($perl->stdout()), qr/Not quite there yet.*Need more budget/,
     "all TODO reasons concatenated";
 

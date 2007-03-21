@@ -1,5 +1,6 @@
 Build.PL
 Changes
+examples/test-group.t
 lib/Test/Group.pm
 Makefile.PL
 MANIFEST

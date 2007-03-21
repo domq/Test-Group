@@ -248,29 +248,29 @@ input file multiple times:
 
     use Test::Unit;
     use Test::Cmd;
-    
+
     my $test;
-    
+
     $input = <<'EOF';
     test_program should process this input
     and exit successfully (status 0).
     EOF
-    
+
     sub set_up {
         $test = Test::Cmd->new(prog => 'test_program', workdir => '');
         $test->write('input_file', $input);
     }
-    
+
     sub test_x {
         my $result = $test->run(args => '-x input_file');
         assert($result == 0, "failed test_x\n");
     }
-    
+
     sub test_y {
         my $result = $test->run(args => '-y input_file');
         assert($result == 0, "failed test_y\n");
     }
-    
+
     create_suite();
     run_suite;
 
@@ -1606,7 +1606,7 @@ the appropriate magic that will execute it as a Perl script:
 	$output = `script`;
 	ok($output eq "$line\n");
 
-=back 4
+=back
 
 Addtional hints on writing portable tests are welcome.
 

@@ -1,5 +1,10 @@
 Revision history for Test-Group
 
+0.07    2007-03-21
+        Exceptions are now dumped with diag() instead of
+            abusing the test name
+        Now works with Perl 5.6.2, with thanks to David Cantrell
+
 0.06    2007-02-04
         Minor tweaks to the pretty-printing of exceptions
         Some code and test cleanups

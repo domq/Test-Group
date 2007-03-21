@@ -8,6 +8,7 @@ WriteMakefile
                            'Exporter' => '0',
                            'File::Basename' => '0',
                            'File::Find' => '0',
+                           'File::Slurp' => '0',
                            'File::Spec' => '0',
                            'IO::File' => '0',
                            'Test::Builder' => '0',
@@ -15,6 +16,7 @@ WriteMakefile
                            'Test::Simple' => '0.59'
                          },
           'INSTALLDIRS' => 'site',
+          'EXE_FILES' => [],
           'PL_FILES' => {}
         )
 ;

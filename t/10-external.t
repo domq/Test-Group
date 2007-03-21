@@ -34,11 +34,11 @@ test      "group", sub {
     }
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..1
 ok 1 - group
 EOOUT
-is $perl->stderr(), "";
+is scalar($perl->stderr()), "";
 
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 1, "failing test group";
 use Test::More tests=>1;
@@ -50,14 +50,14 @@ test      "group", sub {
     like   "blah blah blah", qr/bli/;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..1
 not ok 1 - group
 EOOUT
-like $perl->stderr(), qr/got:.*bla/, "got bla";
-like $perl->stderr(), qr/expected:.*ble/, "expected ble";
-like $perl->stderr(), qr/failed.*sub test blah/i, "another subtest failed";
-like $perl->stderr(), qr/failed 1 test.* of 1/,
+like scalar($perl->stderr()), qr/got:.*bla/, "got bla";
+like scalar($perl->stderr()), qr/expected:.*ble/, "expected ble";
+like scalar($perl->stderr()), qr/failed.*sub test blah/i, "another subtest failed";
+like scalar($perl->stderr()), qr/failed 1 test.* of 1/,
     "1 test total despite multiple failures";
 
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 1, "empty test group fails";
@@ -67,7 +67,7 @@ test      "empty group", sub {
     1;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT, "empty test groups";
+is scalar($perl->stdout()), <<EOOUT, "empty test groups";
 1..2
 not ok 1 - empty group
 EOOUT
@@ -85,7 +85,7 @@ test      "group 2", sub {
     fail;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..2
 ok 1 - group 1
 ok 2 # skip <reason>
@@ -107,7 +107,7 @@ test      "other group", sub {
     fail;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..3
 ok 1 - group 1
 not ok 2 - group 2
@@ -130,7 +130,7 @@ test      "other group", sub {
     0;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..3
 ok 1 # skip <reason>
 ok 2 # skip <reason>
@@ -153,7 +153,7 @@ test      "other group", sub {
     0;
 };
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..3
 ok 1 # skip <reason>
 ok 2 # skip <reason>
@@ -170,10 +170,10 @@ test      "group 1", sub {
 };
 print "zut";
 EOSCRIPT
-is $perl->stdout(), <<EOOUT;
+is scalar($perl->stdout()), <<EOOUT;
 1..1
 EOOUT
-like($perl->stderr(), qr/no tests run|test died before it could/i);
+like(scalar($perl->stderr()), qr/no tests run|test died before it could/i);
 
 my $errcode = $perl->run(stdin => <<'EOSCRIPT');
 use Test::Group;
@@ -205,8 +205,8 @@ test "group 2", sub {
     ok 1;
 };
 EOSCRIPT
-like $perl->stdout(), qr/^not ok 1.*test.*group 1.*died.*log/m;
-like $perl->stdout(), qr/^ok 2/m;
+like scalar($perl->stdout()), qr/^not ok 1.*\*died\*/m;
+like scalar($perl->stdout()), qr/^ok 2/m;
 
 my $contents;
 $perl->read(\$contents, 'log');
@@ -237,7 +237,7 @@ test "outer 2" => sub {
 };
 
 EOSCRIPT
-is $perl->stdout(), <<"EOOUT" or warn $perl->stderr;
+is scalar($perl->stdout()), <<"EOOUT" or warn $perl->stderr;
 1..2
 ok 1 - outer 1
 not ok 2 - outer 2
