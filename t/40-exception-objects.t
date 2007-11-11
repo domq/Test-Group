@@ -30,9 +30,11 @@ is $perl->run(stdin => $script) >> 8, 1, "throwing an exception object w/o a tes
 like(scalar($perl->stdout), qr/^not ok 1/m,
      "exception objects also cause the group to fail");
 
-my $logfile = $perl->workpath("log"); unlink($logfile);
+my $logfile = $perl->workpath("log");   # Careful, may contain
+                                        # backslashes under win32!
+unlink($logfile);
 $script = "use Data::Dumper;\n" . $script;
-$script =~ s/(use Test::Group;)/$1Test::Group->logfile("$logfile");/;
+$script =~ s/(use Test::Group;)/$1Test::Group->logfile('$logfile');/;
 
 is($perl->run(stdin => $script) >> 8, 1, "throwing an exception object into the log file");
 

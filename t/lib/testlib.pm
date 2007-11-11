@@ -5,8 +5,6 @@
 
 testlib.pm - Utility functions for testing L<Test::More>.
 
-=over
-
 =cut
 
 use strict;
@@ -14,7 +12,7 @@ use warnings;
 use Test::Cmd;
 use Config;
 
-=item I<perl_cmd()>
+=head2 I<perl_cmd()>
 
 Returns a newly-constructed L<Test::Cmd> object using the Perl
 interpreter currently running as the command, with an @INC
@@ -30,7 +28,7 @@ sub perl_cmd {
          workdir => '');
 }
 
-=item I<test_test>
+=head2 I<test_test>
 
 Works like L<Test::Group/test>, except that the result of the test is
 not sent upwards to L<Test::Builder> but instead returned as a
@@ -58,7 +56,7 @@ sub test_test ($&) {
     return $subtest;
 }
 
-=item I<get_pod_snippet($name)>
+=head2 I<get_pod_snippet($name)>
 
 Parses the source code of L<Test::Group> and extracts the snippets of
 code that are in the POD therein, identified by C<=for tests> markers.
@@ -76,16 +74,12 @@ sub get_pod_snippet {
     return $snip;
 }
 
-=back
-
 =head2 Mixins to Test::Group::_Runner
 
 I<testlib.pm> defines additional methods for the
 L<Test::Group/Test::Group::_Runner internal class>, which are trivial
 wrappers around the API that that class already provides and only
 exist to make the test suite more easy to read and write.
-
-=over
 
 =head3 prints_OK
 
@@ -113,7 +107,7 @@ sub Test::Group::_Runner::prints_TODO_string {
 }
 
 
-=item I<Test::Group::_Runner::is_failed()>
+=head2 I<Test::Group::_Runner::is_failed()>
 
 Returns true iff this test group failed from the point of view of
 L<Test::Harness>.  This is computed from the negation of the C<xor> of
@@ -126,9 +120,5 @@ sub Test::Group::_Runner::is_failed {
     my ($self) = @_;
     return ! ($self->prints_TODO_string xor $self->prints_OK);
 }
-
-=back
-
-=cut
 
 1;

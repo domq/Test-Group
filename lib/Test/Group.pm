@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.07
+Test::Group version 0.08_01, RELEASE CANDIDATE
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08_01';
 
 =head1 SYNOPSIS
 
@@ -261,10 +261,6 @@ BEGIN { die "Need Test::Simple version 0.59 or later, sorry"
             unless Test::Builder->can("create"); }
 use IO::File;
 use File::Spec;
-
-our $__reversed__;  # Test groups that should fail, will succeed if
-                    # set to true, and vice versa. To be used *only*
-                    # for self-tests.
 
 my $classstate_verbose;
 my $classstate_skipcounter;

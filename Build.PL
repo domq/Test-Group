@@ -47,7 +47,7 @@ my $builder = Module::Build->new
 # http://www.nntp.perl.org/group/perl.cpan.testers/2007/02/msg422771.html
 if ( (! ($builder->prereq_failures &&
          $builder->prereq_failures->{requires}->{"Test::Simple"})) &&
-     (`$^X -MTest::Builder -e 'print "ok" if Test::Builder->can("create");'`
+     (`$^X -MTest::Builder -e "print 'ok' if Test::Builder->can('create');"`
       !~ m/ok/) ) {
     die <<"MESSAGE";
 

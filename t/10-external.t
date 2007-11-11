@@ -191,12 +191,13 @@ is($errcode & 255, 0, "we don't get signal");
 unlike (scalar($perl->stdout()), qr/^line2/m,
         "proper quoting of diagnostic messages");
 
-my $logfile = $perl->workpath("log");
+my $logfile = $perl->workpath("log");  # Careful, may contain
+                                       # backslashes under win32!
 isnt $perl->run(stdin => <<"EOSCRIPT") >> 8, 0, "catch exceptions";
 use Test::More tests => 2;
 use Test::Group;
 
-Test::Group->logfile("$logfile");
+Test::Group->logfile('$logfile');
 
 test "group 1", sub {
     die "line1\nline2\nline3";

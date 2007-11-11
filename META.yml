@@ -1,12 +1,10 @@
 ---
 name: Test-Group
-version: 0.07
+version: 0.08_01
 author:
   - 'Dominique Quatravaux <domq@cpan.org>'
 abstract: Group together related tests in a test suite
 license: perl
-resources:
-  license: http://dev.perl.org/licenses/
 requires:
   Exporter: 0
   File::Slurp: 0
@@ -19,10 +17,13 @@ build_requires:
   File::Basename: 0
   File::Find: 0
 provides:
+  Test::Builder::_HijackedByTestGroup:
+    file: lib/Test/Group.pm
+    version: 0.08_01
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.07
-generated_by: Module::Build version 0.2806
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+    version: 0.08_01
+  Test::Group::_Runner:
+    file: lib/Test/Group.pm
+    version: 0.08_01
+generated_by: Module::Build version 0.26
