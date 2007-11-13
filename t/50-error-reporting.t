@@ -42,8 +42,9 @@ ok(my $perl = Test::Cmd->new
 
 isnt($perl->run(stdin => ""), 0, "failing test");
 like(scalar($perl->stdout), qr/not ok 1/, "test marked failed");
-like(scalar($perl->stderr), qr/oops.*\n.*$scriptfile.*line 7/,
+# Beware of $scriptfile containing backslashes under Win32:
+like(scalar($perl->stderr), qr/oops.*\n.*\Q$scriptfile\E.*line 7/,
      "sub-test failure reported at the correct line");
-like(scalar($perl->stderr), qr/this fails.*\n.*$scriptfile.*line 8/,
+like(scalar($perl->stderr), qr/this fails.*\n.*\Q$scriptfile\E.*line 8/,
     "group failure reported at the correct line");
 

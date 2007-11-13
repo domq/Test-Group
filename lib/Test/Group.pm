@@ -13,11 +13,11 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.08_01, RELEASE CANDIDATE
+Test::Group version 0.08
 
 =cut
 
-our $VERSION = '0.08_01';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
