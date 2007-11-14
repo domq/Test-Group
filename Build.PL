@@ -10,9 +10,12 @@
 #     make test
 #     make install
 
+require 5.006;
+
 use strict;
 use warnings;
 use Module::Build;
+
 
 my $builder = Module::Build->new
     ( module_name         => 'Test::Group',
