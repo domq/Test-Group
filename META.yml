@@ -1,6 +1,6 @@
 ---
 name: Test-Group
-version: 0.09
+version: 0.11
 author:
   - 'Dominique Quatravaux <domq@cpan.org>'
 abstract: Group together related tests in a test suite
@@ -13,17 +13,18 @@ requires:
   Test::Builder: 0
   Test::More: 0
   Test::Simple: 0.59
+  perl: 5.006
 build_requires:
   File::Basename: 0
   File::Find: 0
 provides:
   Test::Builder::_HijackedByTestGroup:
     file: lib/Test/Group.pm
-    version: 0.09
+    version: 0.11
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.09
+    version: 0.11
   Test::Group::_Runner:
     file: lib/Test/Group.pm
-    version: 0.09
+    version: 0.11
 generated_by: Module::Build version 0.26

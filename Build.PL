@@ -42,7 +42,8 @@ my $builder = Module::Build->new
        'File::Basename' => 0,
       },
     add_to_cleanup      => [ 'Test-Group-*' ],
-    create_makefile_pl  => 'traditional', # Makes Module::Build optional
+## The Makefile.PL is now managed by hand:
+#    create_makefile_pl  => 'traditional',
 );
 
 # Fixes an @INC ordering problem dug up by CPAN testers, that causes
