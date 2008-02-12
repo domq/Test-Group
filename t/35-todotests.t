@@ -260,7 +260,7 @@ TEST_CASE
     # The POD also states that the un-TODOified version of this test
     # is *also* borked:
     $code =~ s/TODO/TADA/g;
-    $result = eval("our \$TADA; $code"); die $@ if $@;
+    $result = eval("use vars qw(\$TADA); $code"); die $@ if $@;
     ok($result->is_failed);
     ok(! defined $result->prints_TODO_string);
 }

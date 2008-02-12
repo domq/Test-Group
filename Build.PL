@@ -10,7 +10,7 @@
 #     make test
 #     make install
 
-require 5.006;
+use 5.004;
 
 use strict;
 use warnings;
@@ -27,9 +27,7 @@ my $builder = Module::Build->new
        'Exporter'     => 0,
        'Test::Simple' => 0.59,  # Test::Builder->create() needed
        'Test::Builder' => 0,
-       'Test::More' => 0,
        'File::Spec' => 0,
-       'File::Slurp' => 0,
        'IO::File' => 0,
       },
       build_requires     =>
@@ -40,6 +38,11 @@ my $builder = Module::Build->new
        # dependencies of its own:
        'File::Find' => 0,
        'File::Basename' => 0,
+       # The test suite has its own set of dependencies:
+       'Test::More' => 0,
+       'File::Slurp' => 0,
+       'File::Temp' => 0,
+       'File::Spec::Functions' => 0,
       },
     add_to_cleanup      => [ 'Test-Group-*' ],
 ## The Makefile.PL is now managed by hand:

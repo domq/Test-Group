@@ -50,7 +50,8 @@ sub test_test ($&) {
 
     # This is just a dummy adapter to protect the test suite
     # against future changes of Test::Group's internals.
-    my $subtest = Test::Group::_Runner->new($name, $sub);
+    my ($callerpack) = caller(0);
+    my $subtest = Test::Group::_Runner->new($name, $callerpack, $sub);
     $subtest->mute(1) unless $ENV{DEBUG};
     $subtest->run;
     return $subtest;

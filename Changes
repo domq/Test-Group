@@ -1,5 +1,11 @@
 Revision history for Test-Group
 
+0.12    2008-02-12
+        Compatibility with Perl 5.4
+
+0.11    2007-11-15
+        Some quick fix that I can't remember...
+
 0.09    2007-11-14
         "require 5.006;", again to placate CPANTS
 

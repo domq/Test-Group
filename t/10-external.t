@@ -17,11 +17,6 @@ use warnings;
 
 ok(my $perl = perl_cmd);
 
-# FIXME: the tests below still perform too many verbatim string
-# comparisons, which makes the test suite fragile to changes in
-# Test::Harness.  Maybe we should use the real Test::Harness instead
-# of a Perl run through Test::Cmd?
-
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 0, "passing test group";
 use Test::More tests=>1;
 use Test::Group;

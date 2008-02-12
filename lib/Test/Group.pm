@@ -13,11 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.11
+Test::Group version 0.12
 
 =cut
 
-our $VERSION = '0.11';
+use vars qw($VERSION);
+$VERSION = '0.12';
 
 =head1 SYNOPSIS
 
@@ -256,6 +257,7 @@ one to be found in L</SYNOPSIS>) will succeed as expected:
 
 use 5.004;
 
+use Test::Simple;
 use Test::Builder;
 BEGIN { die "Need Test::Simple version 0.59 or later, sorry"
             unless Test::Builder->can("create"); }
@@ -279,14 +281,13 @@ script. They are all exported by default.
 =cut
 
 use Exporter;
-our @ISA    = qw(Exporter);
-our @EXPORT = qw(test skip_next_test skip_next_tests
-                 begin_skipping_tests end_skipping_tests
-                 test_only);
+use vars qw(@ISA @EXPORT);
+@ISA    = qw(Exporter);
+@EXPORT = qw(test skip_next_test skip_next_tests
+             begin_skipping_tests end_skipping_tests
+             test_only);
 
-=over
-
-=item I<test($name, $groupsub)>
+=head3 test ($name, $groupsub)
 
 Executes I<$groupsub>, which must be a reference to a subroutine, in a
 controlled environment and groups the results of all
@@ -341,11 +342,13 @@ a TODO excused failure), and undef if the test group was skipped.
 sub test ($&) {
     my ($name, $code) = @_;
 
+    my ($callerpackage) = caller(0);
+
     my $Test = Test::Builder->new; # This is a singleton actually -
     # it should read "Test::Builder->the()" with permission from
     # Michael Schwern :-)
 
-    my $subTest = Test::Group::_Runner->new($name, $code);
+    my $subTest = Test::Group::_Runner->new($name, $callerpackage, $code);
     $subTest->run();
 
     if ($subTest->is_skipped) {
@@ -393,7 +396,7 @@ MESSAGE
     return $OK ? 1 : 0;
 }
 
-=item I<skip_next_tests>
+=head3 skip_next_tests ()
 
     skip_next_tests 5;
     skip_next_tests 5, "reason";
@@ -401,7 +404,7 @@ MESSAGE
 Skips the 5 following group of tests.  Dies if we are currently
 skipping tests already.
 
-=item I<skip_next_test>
+=head3 skip_next_test ()
 
     skip_next_test;
     skip_next_test "reason";
@@ -411,7 +414,7 @@ Equivalent to:
     skip_next_tests 1;
     skip_next_tests 1, "reason";
 
-=item I<begin_skipping_tests>
+=head3 begin_skipping_tests ()
 
     begin_skipping_tests
     begin_skipping_tests "reason";
@@ -420,7 +423,7 @@ Skips all subsequent groups of tests until blocked by
 L</end_skipping_tests>.  Dies if we are currently skipping tests
 already.
 
-=item I<end_skipping_tests>
+=head3 end_skipping_tests ()
 
 Cancels the effect of L</begin_skipping_tests>. Has no effect if we
 are not currently skipping tests.
@@ -452,7 +455,7 @@ sub end_skipping_tests {
     return 1;
 }
 
-=item I<test_only>
+=head3 test_only ()
 
     test_only "bla()", "reason";
     test_only qr/^bla/;
@@ -483,8 +486,6 @@ sub test_only (;$$) {
     }
 }
 
-=back
-
 =head1 CLASS METHODS
 
 A handful of class methods are available to tweak the behavior of this
@@ -492,9 +493,7 @@ module on a global basis. They are to be invoked like this:
 
    Test::Group->foo(@args);
 
-=over
-
-=item I<verbose($level)>
+=head2 verbose ($level)
 
 Sets verbosity level to $level, where 0 means quietest. For now only 0
 and 1 are implemented.
@@ -503,7 +502,7 @@ and 1 are implemented.
 
 sub verbose { shift; $classstate_verbose = shift }
 
-=item I<catch_exceptions()>
+=head2 catch_exceptions ()
 
 Causes exceptions thrown from within the sub reference passed to
 L</test> to be blocked; in this case, the test currently running will
@@ -514,7 +513,7 @@ inside I<test> blocks; those thrown by surrounding code (if any) still
 cause the test script to terminate as usual unless other appropriate
 steps are taken.
 
-=item I<dont_catch_exceptions()>
+=head2 dont_catch_exceptions ()
 
 Reverses the effect of L</catch_exceptions>, and causes exceptions
 thrown from a L</test> sub reference to be fatal to the whole suite.
@@ -527,7 +526,7 @@ whole-script pragma.
 sub catch_exceptions { $classstate_catchexceptions = 1; }
 sub dont_catch_exceptions { $classstate_catchexceptions = 0; }
 
-=item I<logfile($classstate_logfile)>
+=head2 logfile ($classstate_logfile)
 
 Sets the log file for caught exceptions to F<$classstate_logfile>.
 From this point on, all exceptions thrown from within a text group
@@ -546,8 +545,6 @@ sub logfile {
         die "Cannot open $classstate_logfile";
 }
 
-=back
-
 =begin internals
 
 =head1 INTERNALS
@@ -562,36 +559,36 @@ magic, which is performed using the
 L</Test::Builder::_HijackedByTestGroup internal class> as an
 accomplice.
 
-=over
-
 =cut
 
 package Test::Group::_Runner;
 
-=item I<new($name, $sub)>
+=head3 new ($name, $callerpackage, $sub)
 
 Object constructor; constructs an object that models only the state of
-the test group $sub that is about to be run.  This
-I<Test::Group::_Runner> object is available by calling L</current>
-from $sub, while it is being executed by L</run>.  Afterwards, it can
-be queried using L</subtests> and other methods to discover how the
-test group run went.
+the test group $sub that is about to be run as if L</test> had been
+invoked from $callerpackage.  This I<Test::Group::_Runner> object is
+available by calling L</current> from $sub, while it is being executed
+by L</run>.  Afterwards, it can be queried using L</subtests> and
+other methods to discover how the test group run went.
 
 =cut
 
 sub new {
-    my ($class, $name, $code) = @_;
+    my ($class, $name, $callerpackage, $code) = @_;
 
     my $self = bless {
-                      name     => $name,
-                      code     => $code,
-                      subtests => [],
+                      name          => $name,
+                      callerpackage => $callerpackage,
+                      code          => $code,
+                      subtests      => [],
                      }, $class;
     # Stash the TODO state on behalf of L</as_Test_Builder_params>,
     # coz we're going to muck with $TODO soon.  Warning, ->todo
     # returns 0 instead of undef if there is no TODO block active:
     my $T = Test::Builder->new;
-    $self->{in_todo} = $T->todo if $T->todo;
+    my $current_todo = $T->todo($callerpackage);
+    $self->{in_todo} = $current_todo if $current_todo;
 
     # For testability: test groups run inside a mute group are mute as
     # well.
@@ -601,7 +598,7 @@ sub new {
     return $self;
 }
 
-=item I<run()>
+=head3 run ()
 
 Executes the $sub test group passed as the second parameter to
 L</new>, monitoring the results of the sub-tests and stashing them
@@ -630,12 +627,9 @@ sub run {
 
     my ($exn);
 
-    my ($callerpack) = caller(1); # Accounting for one stack frame for
-                                  # L</test>
-
     $self->_hijack();    # BEGIN CRITICAL SECTION
     my $exception_raised = !
-        $self->_run_with_local_TODO($callerpack, $self->{code});
+        $self->_run_with_local_TODO($self->{callerpackage}, $self->{code});
     $self->_unhijack();  # END CRITICAL SECTION
 
     if ($exception_raised) {
@@ -649,9 +643,9 @@ sub run {
     return; # No useful return value yet
 }
 
-=item I<current()>
+=head3 current ()
 
-=item I<current($newcurrent)>
+=head3 current ($newcurrent)
 
 Class method, gets or sets the current instance of
 I<Test::Group::_Runner> w.r.t. the current state of the L</_hijack>
@@ -671,7 +665,7 @@ I<Test::Group::_Runner> w.r.t. the current state of the L</_hijack>
     }
 }
 
-=item I<orig_blessed()>
+=head3 orig_blessed ()
 
 Returns the class in which C<< Test::Builder->new >> was originally
 blessed just before it got L</_hijack>ed: this will usually be
@@ -688,9 +682,9 @@ sub orig_blessed {
     return; # Object not completely constructed, should not happen
 }
 
-=item I<mute()>
+=head3 mute ()
 
-=item I<mute($bool)>
+=head3 mute ($bool)
 
 Gets or sets the mute status (false by default).  This method is not
 (yet) made visible from L<Test::Group> proper; it is used in the test
@@ -709,11 +703,11 @@ sub mute {
     }
 }
 
-=item I<ok($status)>
+=head3 ok ($status)
 
-=item I<ok($status, $testname)>
+=head3 ok ($status, $testname)
 
-=item I<skip($reason)>
+=head3 skip ($reason)
 
 Called from within the group subs by virtue of
 L</Test::Builder::_HijackedByTestGroup internal class> delegating both
@@ -771,7 +765,7 @@ sub skip {
     push @{$self->{subtests}}, { status => 1 };
 }
 
-=item I<diag(@messages)>
+=head3 diag (@messages)
 
 Called from within the group subs by virtue of
 L</Test::Builder::_HijackedByTestGroup internal class> delegating it
@@ -787,7 +781,7 @@ sub diag {
     $origdiag->(Test::Builder->new, @msgs);
 }
 
-=item I<subtests()>
+=head3 subtests ()
 
 After the test is run, returns a list of hash references, each
 indicating the status of a subtest that ran during L</run>. The
@@ -815,7 +809,7 @@ progresses.
 
 sub subtests { @{shift->{subtests}} }
 
-=item I<unexcused_failure_subtests>
+=head3 unexcused_failure_subtests ()
 
 Returns the subset of the L</subtests> that have a false I<status> and
 no I<todo>.  Such tests cause the test group to fail as a whole.  In
@@ -828,7 +822,7 @@ sub unexcused_failure_subtests {
         (shift->subtests);
 }
 
-=item I<unexpected_success_subtests>
+=head3 unexpected_success_subtests ()
 
 Returns the subset of the L</subtests> that have a true I<status> and
 also a I<todo>.  Such tests are called B<unexpected successes> and are
@@ -842,7 +836,7 @@ sub unexpected_success_subtests {
     grep { $_->{status} && exists($_->{todo}) } (shift->subtests);
 }
 
-=item I<todo_subtests>
+=head3 todo_subtests ()
 
 Returns the subset of the L</subtests> that have a I<todo>, regardless
 of whether they are L</unexpected_success_subtests>.
@@ -853,7 +847,7 @@ sub todo_subtests {
     grep { exists $_->{todo} } (shift->subtests)
 }
 
-=item I<got_exception()>
+=head3 got_exception ()
 
 Returns true iff there was an exception raised while the test group
 sub ran (that is, whether L</_record_exception> was called once for
@@ -863,7 +857,7 @@ this object).
 
 sub got_exception { defined shift->{exception} }
 
-=item I<exception()>
+=head3 exception ()
 
 Returns the value of the exception passed to L</_record_exception>.
 Note that it is possible for I<exception()> to return undef, yet
@@ -876,11 +870,11 @@ use "local $@;" at the beginning of every sub DESTROY).
 
 sub exception { shift->{exception} }
 
-=item I<is_skipped()>
+=head3 is_skipped ()
 
 Returns true iff this test was skipped and did not actually run.
 
-=item I<skip_reason()>
+=head3 skip_reason ()
 
 Returns the reason that was stipulated by the test writer for skipping
 this test.  Note that I<skip_reason()> may be undef even if
@@ -891,7 +885,7 @@ L</skipped> is true.
 sub is_skipped { exists shift->{skipreason} }
 sub skip_reason { shift->{skipreason} }
 
-=item I<as_Test_Builder_params>
+=head3 as_Test_Builder_params ()
 
 Returns a ($OK_status, $TODO_string) pair that sums up what we should
 tell L<Test::Builder> about this test (assuming that it actually ran,
@@ -959,7 +953,7 @@ MESSAGE
     return ($OK, $TODO_string);
 }
 
-=item I<_hijack()>
+=head3 _hijack ()
 
 Hijacks L<Test::Builder> for the time the test group sub is being run,
 so that we may capture the calls to L<Test::Builder/ok> and friends
@@ -1001,7 +995,7 @@ sub _hijack {
     $class->current($self);
 }
 
-=item I<_unhijack()>
+=head3 _unhijack ()
 
 Unbuggers the C<< Test::Builder->new >> singleton that was reblessed
 by L</_hijack>, so that it may resume being itself, or pops one item
@@ -1021,10 +1015,10 @@ sub _unhijack {
     1;
 }
 
-=item I<_run_with_local_TODO($callerpack, $sub)>
+=head3 _run_with_local_TODO ($callerpackage, $sub)
 
 Invokes the test sub $sub while temporarily setting the variable
-C<${${callerpack}::TODO}> to undef, thereby implementing the
+C<${${callerpackage}::TODO}> to undef, thereby implementing the
 local-TODO semantics described in L</TODO Tests>.  Returns true if
 $sub completed, and false if $sub threw an exception (that is
 thereafter available in $@ as usual).
@@ -1036,13 +1030,13 @@ calling L</_hijack> and closed by calling L</_unhijack>.
 =cut
 
 sub _run_with_local_TODO {
-    my ($self, $callerpack, $sub) = @_;
+    my ($self, $callerpackage, $sub) = @_;
     ## Locally sets $TODO to undef, see POD snippet "TODO gotcha 2".
     ## I used to do
     #     no strict 'refs';
-    #     local ${$callerpack . '::TODO' };
+    #     local ${$callerpackage . '::TODO' };
     ## but this doesn't work in 5.6 ("Can't localize through a reference")
-    my $TODOref = do { no strict "refs"; \${$callerpack . '::TODO' } };
+    my $TODOref = do { no strict "refs"; \${$callerpackage . '::TODO' } };
     my $TODOorig = $$TODOref;
     $$TODOref = undef;
 
@@ -1051,7 +1045,7 @@ sub _run_with_local_TODO {
     return $retval;
 }
 
-=item I<_skip($reason)>
+=head3 _skip ($reason)
 
 Private setter called from L</run> when the test sub is not to be
 called at all.  $reason is the reason why the test is being skipped
@@ -1066,7 +1060,7 @@ sub _skip {
     $self->{skipreason} = $reason;
 }
 
-=item I<_record_exception()>
+=head3 _record_exception ()
 
 Memorizes the exception that was raised by the group sub that just
 run.  The exception is looked for in variables C<$@> and
@@ -1085,7 +1079,7 @@ sub _record_exception {
            undef  );
 }
 
-=item I<_make_todo_string(@subtests)>
+=head3 _make_todo_string (@subtests)
 
 Pretty-prints an appropriate string to return as the second element in
 the returned list on behalf of L</as_Test_Builder_params>.  @subtests
@@ -1101,8 +1095,6 @@ sub _make_todo_string {
                 @subtests);
 }
 
-=back
-
 =head2 Test::Builder::_HijackedByTestGroup internal class
 
 This is an internal subclass of L<Test::Builder> used as an accomplice
@@ -1112,18 +1104,16 @@ testing modules from the CPAN, e.g. L<Test::More>, L<Test::Pod> and
 friends.  It works almost the same as the real thing, except for the
 following method calls:
 
-=over
-
 =cut
 
 package Test::Builder::_HijackedByTestGroup;
 use base "Test::Builder";
 
-=item I<ok>
+=head3 ok ()
 
-=item I<skip>
+=head3 skip ()
 
-=item I<diag>
+=head3 diag ()
 
 These methods are delegated to the L</current> instance of
 I<Test::Group::_Runner>.
@@ -1138,8 +1128,6 @@ foreach my $delegated (qw(ok skip diag)) {
         goto &{"Test::Group::_Runner::".$delegated};
     };
 }
-
-=back
 
 =end internals
 
