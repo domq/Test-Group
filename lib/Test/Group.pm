@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.12
+Test::Group version 0.14
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.12';
+$VERSION = '0.14';
 
 =head1 SYNOPSIS
 
@@ -396,23 +396,21 @@ MESSAGE
     return $OK ? 1 : 0;
 }
 
-=head3 skip_next_tests ()
+=head3 skip_next_tests ($number)
 
-    skip_next_tests 5;
-    skip_next_tests 5, "reason";
+=head3 skip_next_tests ($number, $reason)
 
-Skips the 5 following group of tests.  Dies if we are currently
-skipping tests already.
+Skips the $number following groups of tests with reason $reason.  Dies
+if we are currently skipping tests already.
 
 =head3 skip_next_test ()
 
-    skip_next_test;
-    skip_next_test "reason";
+=head3 skip_next_test ($reason)
 
 Equivalent to:
 
     skip_next_tests 1;
-    skip_next_tests 1, "reason";
+    skip_next_tests 1, $reason;
 
 =head3 begin_skipping_tests ()
 
@@ -420,8 +418,7 @@ Equivalent to:
     begin_skipping_tests "reason";
 
 Skips all subsequent groups of tests until blocked by
-L</end_skipping_tests>.  Dies if we are currently skipping tests
-already.
+L</end_skipping_tests>.
 
 =head3 end_skipping_tests ()
 
@@ -432,8 +429,8 @@ are not currently skipping tests.
 
 sub skip_next_tests {
     my ($counter, $reason) = @_;
-    die "ALREADY_SKIPPING" if $classstate_skipcounter;
-    $classstate_skipcounter = $counter;
+    $classstate_skipcounter = $counter unless
+      ($classstate_skipcounter && $classstate_skipcounter > $counter);
     $classstate_skipreason  = $reason;
     return 1;
 }
@@ -444,7 +441,6 @@ sub skip_next_test {
 
 sub begin_skipping_tests {
     my ($reason) = @_;
-    die "ALREADY_SKIPPING" if $classstate_skipcounter;
     $classstate_skipcounter = -1;
     $classstate_skipreason = $reason;
     return 1;
@@ -732,12 +728,9 @@ sub ok {
     # Test::Builder about the TODO state.
     my $T = Test::Builder->new;
     my($pack, $file, $line) = $T->caller;
-    my $todo = $T->todo($pack);
-    if (defined $todo) {
-        $todo = substr($todo, 0); # Stringifies
-        $todo = undef if $todo eq "0";  # Yes, that's how
-                                        # Test::Builder->todo works.
-    }
+
+    my $todo = $T->todo($pack) || undef;
+    $todo = substr($todo, 0) if $todo; # Stringifies
 
     my $result = { status => $status };
     $result->{todo} = $todo if defined($todo);
@@ -746,7 +739,6 @@ sub ok {
     # Report failures only, as Test::Builder would
     if( ! $status && ! $self->mute ) {
         my $msg = $todo ? "Failed (TODO)" : "Failed";
-        $T->_print_diag("\n") if $ENV{HARNESS_ACTIVE};
 
 	if( defined $testname ) {
 	    $T->diag(qq[  $msg test '$testname'\n]);

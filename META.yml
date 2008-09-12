@@ -1,6 +1,6 @@
 ---
 name: Test-Group
-version: 0.12
+version: 0.14
 author:
   - 'Dominique Quatravaux <domq@cpan.org>'
 abstract: Group together related tests in a test suite
@@ -23,7 +23,7 @@ build_requires:
 provides:
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.12
+    version: 0.14
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

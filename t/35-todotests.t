@@ -7,7 +7,7 @@
 
 =cut
 
-use Test::More tests => 58; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::More tests => 54; # Sorry, no_plan not portable for Perl 5.6.1!
 use Test::Group;
 use lib "t/lib";
 use testlib;
@@ -296,36 +296,4 @@ This is a redux from C<30-synopsis.t>
     ok(! $result->is_failed);
     ok(! $result->prints_OK);
 }
-
-=head2 TODO tests in a subprocess
-
-=cut
-
-ok(my $perl = perl_cmd);
-
-is  $perl->run(stdin => <<'TODO_FAILING') >> 8, 0, "TODO group, failing";
-use Test::More tests=>1;
-use Test::Group;
-
-test "TODO sub-test (normal i.e. failing)" => sub {
-    my $beenthere;
-    {
-        local $TODO = "Not quite there yet";
-        fail;
-        $beenthere++;
-    }
-    {
-        local $TODO = "Need more budget";
-        fail;
-        $beenthere++;
-    }
-    is($beenthere, 2);
-};
-
-TODO_FAILING
-
-like scalar($perl->stdout()), qr/not ok 1.*# TODO /,
-    "would nonetheless be treated as a success by Test::Harness";
-like scalar($perl->stdout()), qr/Not quite there yet.*Need more budget/,
-    "all TODO reasons concatenated";
 

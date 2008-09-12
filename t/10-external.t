@@ -168,7 +168,7 @@ EOSCRIPT
 is scalar($perl->stdout()), <<EOOUT;
 1..1
 EOOUT
-like(scalar($perl->stderr()), qr/no tests run|test died before it could/i);
+like(scalar($perl->stderr()), qr/no tests run|before it could/i);
 
 my $errcode = $perl->run(stdin => <<'EOSCRIPT');
 use Test::Group;
