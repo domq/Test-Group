@@ -11,7 +11,7 @@ Revision history for Test-Group
       - Some quick fix that I can't remember...
 
 0.09    2007-11-14
-      - "require 5.006;", again to placate CPANTS
+      - "require 5.006;", again to placate CPAN-testers
 
 0.08    2007-11-13
       - Win32 test suite fixes, with thanks to Mr Muskrat, David

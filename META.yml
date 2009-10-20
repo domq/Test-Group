@@ -1,18 +1,12 @@
 ---
 name: Test-Group
-version: 0.14
+version: 0.14_1
 author:
   - 'Dominique Quatravaux <domq@cpan.org>'
 abstract: Group together related tests in a test suite
 license: perl
 resources:
   license: http://dev.perl.org/licenses/
-requires:
-  Exporter: 0
-  File::Spec: 0
-  IO::File: 0
-  Test::Builder: 0
-  Test::Simple: 0.59
 build_requires:
   File::Basename: 0
   File::Find: 0
@@ -20,11 +14,19 @@ build_requires:
   File::Spec::Functions: 0
   File::Temp: 0
   Test::More: 0
+requires:
+  Exporter: 0
+  File::Spec: 0
+  IO::File: 0
+  Test::Builder: 0
+  Test::Simple: 0.59
+configure_requires:
+  Module::Build: 0.35
 provides:
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.14
-generated_by: Module::Build version 0.2808
+    version: 0.14_1
+generated_by: Module::Build version 0.35
 meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4

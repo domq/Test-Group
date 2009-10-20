@@ -155,7 +155,7 @@ ok 2 # skip <reason>
 not ok 3 - other group
 EOOUT
 
-is $perl->run(stdin => <<'EOSCRIPT') >> 8, 255, "dont_catch_exceptions";
+ok $perl->run(stdin => <<'EOSCRIPT') >> 8, "dont_catch_exceptions";
 use Test::More tests => 1;
 use Test::Group;
 Test::Group->dont_catch_exceptions();

@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.14
+Test::Group version 0.14_1
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.14';
+$VERSION = '0.14_1';
 
 =head1 SYNOPSIS
 
@@ -491,8 +491,15 @@ module on a global basis. They are to be invoked like this:
 
 =head2 verbose ($level)
 
-Sets verbosity level to $level, where 0 means quietest. For now only 0
-and 1 are implemented.
+Sets verbosity level to $level, where 0 means quietest.
+
+At level 1 and above there is a diagnostic line for the start of each
+test group.
+
+At level 2 there is a diagnostic line showing the result of each
+subtest within top-level test groups. At level 3, the subtests of test
+groups nested within top level test groups also get diagnostic lines,
+and so on.
 
 =cut
 
@@ -735,6 +742,15 @@ sub ok {
     my $result = { status => $status };
     $result->{todo} = $todo if defined($todo);
     push @{$self->{subtests}}, $result;
+
+    if ($classstate_verbose and $classstate_verbose >= 2) {
+	my $nums .= $self->_fully_qualified_test_number;
+	if ($nums =~ tr/.// < $classstate_verbose) {
+	    my $line = ($status ? '' : 'not ') . "ok $nums";
+	    $line .= " $testname" if defined $testname;
+	    $T->diag($line);
+	}
+    }
 
     # Report failures only, as Test::Builder would
     if( ! $status && ! $self->mute ) {
@@ -1005,6 +1021,27 @@ sub _unhijack {
         $self->current($self->{parent});
     }
     1;
+}
+
+=head3 _fully_qualified_test_number ()
+
+Returns the compound number of the current test, fully qualified
+from the outer L<Test::Builder> test down into the current test
+group, with numbers joined with dots.
+
+=cut
+
+sub _fully_qualified_test_number {
+    my $self = shift;
+
+    my @nums;
+    my $runner = $self->current;
+    while ($runner) {
+	unshift @nums, 1+scalar $runner->subtests;
+	$runner = $runner->{parent};
+    }
+    --$nums[-1] if @nums;
+    return join '.', 1+Test::Builder->new->current_test, @nums;
 }
 
 =head3 _run_with_local_TODO ($callerpackage, $sub)
