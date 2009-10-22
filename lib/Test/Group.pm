@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.14_1
+Test::Group version 0.15
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.14_1';
+$VERSION = '0.15';
 
 =head1 SYNOPSIS
 
@@ -1192,6 +1192,8 @@ programming style too much.
 
 =head1 AUTHORS
 
+Nick Cleaton <ncleaton@cpan.org>
+
 Dominique Quatravaux <domq@cpan.org>
 
 Nicolas M. ThiE<eacute>ry <nthiery@users.sf.net>
@@ -1199,6 +1201,8 @@ Nicolas M. ThiE<eacute>ry <nthiery@users.sf.net>
 =head1 LICENSE
 
 Copyright (C) 2004 by IDEALX <http://www.idealx.com>
+
+Copyright (c) 2009 by Nick Cleaton and Dominique Quatravaux
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.1 or,

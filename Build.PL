@@ -20,7 +20,8 @@ use Module::Build;
 my $builder = Module::Build->new
     ( module_name         => 'Test::Group',
       license             => 'perl',
-      dist_author         => 'Dominique Quatravaux <domq@cpan.org>',
+      dist_author         => [ 'Nick Cleaton <ncleaton@cpan.org>',
+                               'Dominique Quatravaux <domq@cpan.org>' ],
       dist_version_from   => 'lib/Test/Group.pm',
       requires            =>
       {

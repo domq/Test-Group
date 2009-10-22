@@ -54,6 +54,7 @@ Or alternatively if you have Module::Build installed,
 COPYRIGHT AND LICENCE
 
 Copyright (C) 2006 IDEALX and Dominique Quatravaux <domq@cpan.org>
+Copyright (C) 2009 Nick Cleaton <ncleaton@cpan.org>
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

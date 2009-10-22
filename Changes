@@ -1,5 +1,9 @@
 Revision history for Test-Group
 
+0.15    2009-10-22 (Nick Cleaton)
+      - Fix a failing test on some platforms
+      - Add support for verbose >= 2
+
 0.14    2008-09-12
       - Allows to nest test skipping commands
       - Fixes for the upcoming Test::Builder 0.81
