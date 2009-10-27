@@ -13,6 +13,8 @@ t/32-nested-skipping.t
 t/35-todotests.t
 t/40-exception-objects.t
 t/50-error-reporting.t
+t/55-predicates.t
+t/56-wrappers.t
 t/60-verbose2.t
 t/lib/Test/Cmd.pm
 t/lib/testlib.pm

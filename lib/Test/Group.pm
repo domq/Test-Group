@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.15
+Test::Group version 0.15_01
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.15';
+$VERSION = '0.15_01';
 
 =head1 SYNOPSIS
 
@@ -181,6 +181,8 @@ predicates is straightforward with I<Test::Group>.  For example,
     sub foobar_ok {
         my ($text, $name) = @_;
         $name ||= "foobar_ok";
+        local $Test::Group::Level = $Test::Group::Level + 1;
+        local $Test::Group::InPredicate = 1;
         test $name => sub {
            like($text, qr/foo/, "foo ok");
            like($text, qr/bar/, "bar ok");
@@ -195,6 +197,14 @@ L<Test::More> users, I<foobar_ok> will act as just another I<*_ok>
 predicate (in particular, it always counts for a single test, honors
 L<Test::More/TODO: BLOCK> constructs, etc); and of course, users of
 I<Test::Group> can freely call I<foobar_ok> from within a group.
+
+Adding 1 to C<$Test::Group::Level> causes the location of the call to
+foobar_ok() to be shown if a test fails, rather than the location of
+the test() call within foobar_ok().
+
+Setting C<$Test::Group::InPredicate> to a true value prevents the
+location of individual failing subtests within test groups from being
+shown.
 
 =head2 TODO Tests
 
@@ -264,7 +274,7 @@ BEGIN { die "Need Test::Simple version 0.59 or later, sorry"
 use IO::File;
 use File::Spec;
 
-my $classstate_verbose;
+my $classstate_verbose = $ENV{PERL_TEST_GROUP_VERBOSE};
 my $classstate_skipcounter;
 my $classstate_skipreason;
 my $classstate_testonly_reason;
@@ -272,6 +282,9 @@ my $classstate_testonly_criteria = sub { 1 };
 my $classstate_catchexceptions = 1;
 my $classstate_logfile;
 my $classstate_logfd;
+
+our $Level = 0;
+our $InPredicate;
 
 =head2 FUNCTIONS
 
@@ -392,6 +405,7 @@ MESSAGE
     # TODO status across to Test::Builder; the trick has an adherence
     # in L</ok>, which see.
     local *Test::Builder::todo = sub { $TODO_string };
+    local $Test::Builder::Level = $Test::Builder::Level + $Level;
     $Test->ok($OK, $name);
     return $OK ? 1 : 0;
 }
@@ -500,6 +514,9 @@ At level 2 there is a diagnostic line showing the result of each
 subtest within top-level test groups. At level 3, the subtests of test
 groups nested within top level test groups also get diagnostic lines,
 and so on.
+
+The default verbosity level is 0, or the value of the
+C<PERL_TEST_GROUP_VERBOSE> environment variable if it is set.
 
 =cut
 
@@ -758,7 +775,9 @@ sub ok {
 
 	if( defined $testname ) {
 	    $T->diag(qq[  $msg test '$testname'\n]);
-	    $T->diag(qq[  in $file at line $line.\n]);
+	    unless ($InPredicate) {
+		$T->diag(qq[  in $file at line $line.\n]);
+	    }
 	} else {
 	    $T->diag(qq[  $msg test in $file at line $line.\n]);
 	}

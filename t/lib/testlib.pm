@@ -28,6 +28,75 @@ sub perl_cmd {
          workdir => '');
 }
 
+=head2 I<run_testscript_segments(@segments)>
+
+Joins the segments together into a temporary Perl script, and runs it.
+Within the test script, a function linename() is defined for assigning
+a name to a line of the script.  These names are resolved to line
+numbers when the script is run.
+
+Returns a list of:
+
+=over
+
+=item C<exit status>
+
+The script's exit status.
+
+=item C<stdout>
+
+The standard output from the script, as a single multi-line string.
+
+=item C<errbits>
+
+An array reference, holding the stderr output due to each segment of
+the script.  There will be the same number of entries in this array
+as there were script segments.
+
+=item C<linenum>
+
+A hash reference, mapping the names of lines that were named with
+linename() calls in the test script to the corresponding line numbers.
+
+=back
+
+=cut
+
+sub run_testscript_segments {
+    my @segments = @_;
+
+    my $marker = "xx_linename_marker";
+    my $script = <<'EOSCRIPT';
+use strict;
+use Test::More;
+
+sub linename {
+    my $msg = shift;
+    my $line = (caller)[2];
+    diag "xx_linename_marker <<$msg>> <<$line>>";
+}
+EOSCRIPT
+
+    $script .= join "\ndiag 'xx_segment_marker';\n", @segments;
+
+    my $perl = perl_cmd or die "perl_cmd failed";
+    my $status = $perl->run(stdin => $script);
+    my $stdout = $perl->stdout();
+    my $stderr = $perl->stderr();
+
+    my %linenum;
+    while ($stderr =~ s{^[ \#]*xx_linename_marker (.*)\n}{}m) {
+        my $mark = $1;
+        $mark =~ /^\s*<<(.*)>> <<(\d+)>>\s*$/ or die "bad marker [$mark]";
+        $linenum{$1} = $2;
+    }
+
+    my @errbits = split /^[ \#]*xx_segment_marker.*\n/m, $stderr;
+    @errbits == @segments or die "failed segment split [$stderr]";
+
+    return $status, $stdout, \@errbits, \%linenum;
+}
+
 =head2 I<test_test>
 
 Works like L<Test::Group/test>, except that the result of the test is

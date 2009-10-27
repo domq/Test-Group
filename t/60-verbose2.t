@@ -16,28 +16,32 @@ use warnings;
 
 my @levels = (2, 3, 4, 5, 10, 1000);
 
-plan tests => 1 + @levels*2*3;
+plan tests => 1 + 2*@levels*2*3;
 
 ok(my $perl = perl_cmd);
 
-foreach my $level (@levels) {
-    foreach my $pass (0, 1) {
-        runtest($level);
+foreach my $use_env (0, 1) {
+    foreach my $level (@levels) {
+        foreach my $pass (0, 1) {
+            runtest($use_env, $level, $pass);
+        }
     }
 }
 
 sub runtest {
-    my ($level, $pass) = @_;
+    my ($use_env, $level, $pass) = @_;
 
+    my $name = "use_env=$use_env level=$level pass=$pass";
+    my $set_verbose = $use_env ? '' : "Test::Group->verbose($level);";
     my $a = $pass ? 'a' : 'A';
     my $script = <<EOSCRIPT;
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::Group;
 
-Test::Group->verbose($level);
+$set_verbose
 
 ok 1, "pre";
 
@@ -50,6 +54,12 @@ test bar => sub {
     ok 1, "bar one";
     ok 1, "bar two";
     ok_foobarbaz("foobarbaz", "woo woo");
+};
+
+Test::Group->verbose(0);
+
+test noverbose => sub {
+    ok 1, "no verbosity here";
 };
 
 ok 1, "post";
@@ -77,21 +87,25 @@ sub ok_bar {
 }
 EOSCRIPT
 
+    if ($use_env) {
+        $ENV{PERL_TEST_GROUP_VERBOSE} = $level;
+    }
     if ($pass) {
-        is $perl->run(stdin => $script) >> 8, 0, "passing verbose $level";
+        is $perl->run(stdin => $script) >> 8, 0, "exit status $name";
     } else {
-        ok $perl->run(stdin => $script) >> 8,    "failing verbose $level";
+        ok $perl->run(stdin => $script) >> 8,    "exit status $name";
     }
 
     my $result = $pass ? 'passing' : 'failing';
     my $not = $pass ? '' : 'not ';
 
-    is scalar($perl->stdout()), <<EOOUT, "$result out at $level";
-1..4
+    is scalar($perl->stdout()), <<EOOUT, "stdout $name";
+1..5
 ok 1 - pre
 ok 2 - foo
 ${not}ok 3 - bar
-ok 4 - post
+ok 4 - noverbose
+ok 5 - post
 EOOUT
 
     my $err = $perl->stderr();
@@ -111,17 +125,17 @@ EOOUT
 # ok 3.3.1 woo woo like foo
 # Running group of tests - woo woo like bar
 # ok 3.3.2.1 woo woo like bar like b
-# ${not}ok 3.3.2.2 woo woo like bar like A
+# ${not}ok 3.3.2.2 woo woo like bar like $a
 # ok 3.3.2.3 woo woo like bar like r
 # ${not}ok 3.3.2 woo woo like bar
 # ok 3.3.3 woo woo like baz
 # ${not}ok 3.3 woo woo
 EOERR
-    $want_err .= "# Looks like you failed 1 test of 4.\n" unless $pass;
+    $want_err .= "# Looks like you failed 1 test of 5.\n" unless $pass;
 
     my $too_deep_re = join '\\.', ('\d+') x ($level+1);
     $want_err =~ s/^\# (?:not )?ok $too_deep_re.*\n//mg;
-    is $err, $want_err, "$result err at $level";
+    is $err, $want_err, "stderr $name";
 }
 
 1;
