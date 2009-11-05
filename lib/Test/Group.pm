@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.15_01
+Test::Group version 0.15_02
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.15_01';
+$VERSION = '0.15_02';
 
 =head1 SYNOPSIS
 
@@ -182,8 +182,8 @@ predicates is straightforward with I<Test::Group>.  For example,
         my ($text, $name) = @_;
         $name ||= "foobar_ok";
         local $Test::Group::Level = $Test::Group::Level + 1;
-        local $Test::Group::InPredicate = 1;
         test $name => sub {
+           local $Test::Group::InPredicate = 1;
            like($text, qr/foo/, "foo ok");
            like($text, qr/bar/, "bar ok");
         };

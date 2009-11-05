@@ -10,6 +10,7 @@ appear to originate from the correct locations in the call stack.
 =cut
 
 use Test::More  tests => 5; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::Builder;
 
 use File::Temp qw(tempdir);
 my $tempdir = tempdir
@@ -45,6 +46,12 @@ like(scalar($perl->stdout), qr/not ok 1/, "test marked failed");
 # Beware of $scriptfile containing backslashes under Win32:
 like(scalar($perl->stderr), qr/oops.*\n.*\Q$scriptfile\E.*line 7/,
      "sub-test failure reported at the correct line");
-like(scalar($perl->stderr), qr/this fails.*\n.*\Q$scriptfile\E.*line 8/,
-    "group failure reported at the correct line");
+if ($Test::Builder::VERSION > 0.30) {
+    like(scalar($perl->stderr), qr/this fails.*\n.*\Q$scriptfile\E.*line 8/,
+        "group failure reported at the correct line");
+} else {
+    like(scalar($perl->stderr), qr/Failed test \(\Q$scriptfile\E at line 8\)/,
+        "group failure reported at the correct line");
+}
+
 

@@ -28,73 +28,187 @@ sub perl_cmd {
          workdir => '');
 }
 
-=head2 I<run_testscript_segments(@segments)>
+=head2 I<testscript_ok($script_source, $plan, $name)>
 
-Joins the segments together into a temporary Perl script, and runs it.
-Within the test script, a function linename() is defined for assigning
-a name to a line of the script.  These names are resolved to line
-numbers when the script is run.
+Predicate for checking that a test script acts as expected.  Runs
+the script and fails if anything unexpected happens.
 
-Returns a list of:
+The expected behavior of the script is defined by calling want_test()
+from within the script, just before running each test.
+
+The following functions are available from within the test script
+only.
 
 =over
 
-=item C<exit status>
+=item I<want_test($pass, $name, @diag)>
 
-The script's exit status.
+Declares that the next test will pass or fail according to C<$pass>,
+will have name C<$name> (or will be nameless if C<$name> is undef)
+and will produce the diagnostic output lines listed in C<@diag>.
 
-=item C<stdout>
+The expected diagnostic lines are treated as strings for an exact
+match, unless they have C<-re> prepended, in which case they are
+treated as regular expressions.
 
-The standard output from the script, as a single multi-line string.
+=item I<fail_diag($test_name [,$from_test_builder], [$line])>
 
-=item C<errbits>
+Returns the diagnostic line pattern(s) to match output from a failed
+test. C<$test_name> is the name of the test, or undef for a nameless
+test.  C<$line> should be defined only if a file and line diagnostic
+is expected, and should give the expected line number.
 
-An array reference, holding the stderr output due to each segment of
-the script.  There will be the same number of entries in this array
-as there were script segments.
-
-=item C<linenum>
-
-A hash reference, mapping the names of lines that were named with
-linename() calls in the test script to the corresponding line numbers.
+C<$from_test_builder> should be true if L<Test::Builder> rather than
+L<Test::Group> is expected to generate the diagnostic.  The expected
+text will be adjusted to match the L<Test::Builder> version.
 
 =back
 
 =cut
 
-sub run_testscript_segments {
-    my @segments = @_;
+sub testscript_ok {
+    my ($src, $plan, $name) = @_;
+    $name ||= 'testscript_ok';
 
-    my $marker = "xx_linename_marker";
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
     my $script = <<'EOSCRIPT';
 use strict;
-use Test::More;
+use Test::More tests => __PLAN__;
+use Test::Builder;
 
-sub linename {
-    my $msg = shift;
-    my $line = (caller)[2];
-    diag "xx_linename_marker <<$msg>> <<$line>>";
-}
-EOSCRIPT
+sub fail_diag {
+    my ($test_name, $from_test_builder, $line) = @_;
 
-    $script .= join "\ndiag 'xx_segment_marker';\n", @segments;
+    my $file = (caller)[1];
 
-    my $perl = perl_cmd or die "perl_cmd failed";
-    my $status = $perl->run(stdin => $script);
-    my $stdout = $perl->stdout();
-    my $stderr = $perl->stderr();
+    if ($from_test_builder and $Test::Builder::VERSION <= 0.30) {
+        my $diag = "    Failed test";
+        if (defined $line) {
+            $diag .= " ($file at line $line)";
+        }
+        return $diag;
+    } 
 
-    my %linenum;
-    while ($stderr =~ s{^[ \#]*xx_linename_marker (.*)\n}{}m) {
-        my $mark = $1;
-        $mark =~ /^\s*<<(.*)>> <<(\d+)>>\s*$/ or die "bad marker [$mark]";
-        $linenum{$1} = $2;
+    my @diag;
+    if (defined $test_name) {
+        push @diag, "  Failed test '$test_name'";
+    } else {
+        push @diag, "  Failed test";
+    }
+    if (defined $line) {
+        my $qm = quotemeta $file;
+        push @diag, "-re"."^  (at $qm|in $qm at) line $line\\.?\\s*\$";
     }
 
-    my @errbits = split /^[ \#]*xx_segment_marker.*\n/m, $stderr;
-    @errbits == @segments or die "failed segment split [$stderr]";
+    return @diag;
+}
 
-    return $status, $stdout, \@errbits, \%linenum;
+sub want_test {
+    my ($pass, $name, @diag) = @_;
+    my @args = map {defined $_ ? unpack('H*', $_) : 'undef'} @_;
+    diag 'XXwant_test_markerXX want_test:' . join ',', @args;
+}
+
+EOSCRIPT
+    $script =~ s/__PLAN__/$plan/;
+    $script .= $src . "\ndiag('XXtestscript_under_test_endXX');\n";
+
+    my $ok = 1;
+    my $expect_failed_tests = 0;
+
+    my $perl = perl_cmd or fail("$name perl_cmd failed"), return;
+    my $status = $perl->run(stdin => $script);
+    my $stdout = $perl->stdout();
+    my $stderr = "\n" . $perl->stderr();
+    $stderr =~ s/\n[\# ]+XXtestscript_under_test_endXX.*//s;
+
+    my @errbits = split /\n[ \#]+XXwant_test_markerXX/, $stderr;
+    my $preamble = shift @errbits;
+    if (length $preamble) {
+        $ok = 0;
+        diag "stderr: $preamble";
+    }
+    my $rantests = @errbits;
+    unless ($rantests == $plan) {
+        $ok = 0;
+        diag "planned $plan tests, script ran $rantests";
+    }
+
+    my $want_out = "1..$plan\n";
+    foreach my $i (0 .. $#errbits) {
+        my $e = $errbits[$i];
+        unless ($e =~ s/^ want_test:([,\w]+)\s*//) {
+            $ok = 0;
+            diag "missing header in section [$e]";
+            next;
+        }
+        my ($pass, $name, @diag) =
+                  map { $_ eq 'undef' ? undef : pack 'H*', $_} split /,/, $1;
+        my @orig_diag = @diag;
+
+        my $out = ($pass ? '' : 'not ') . 'ok ' . ($i+1);
+        defined $name and $out .= " - $name";
+        $want_out .= "$out\n";
+
+        $pass or ++$expect_failed_tests;
+
+        $e =~ s/\n$//;
+        my @lines = split /\n/, $e, -1;
+        my @mismatch;
+        foreach my $line (@lines) {
+            if (length $line and $line !~ s/^\# //) {
+                push @mismatch, "  non-diag stderr [$line]";
+            }
+            next if @mismatch;
+            my $want = shift @diag;
+            if (!defined $want) {
+                push @mismatch, "  unmatched line '$line'";
+            } elsif ($want =~ s/^-re//) {
+                unless ($line =~ /$want/) {
+                    push @mismatch,
+                        "  line '$line'",
+                        "  doesn't match '$want'";
+                }
+            } elsif ($line ne $want) {
+                push @mismatch,
+                    "  line '$line'",
+                    "  isnt '$want'";
+            }
+        }
+        if (@mismatch) {
+            $ok = 0;
+            diag "STDERR MISMATCH FOR $name...";
+            diag " got stderr:";
+            foreach my $l (@lines) {
+                diag "  [$l]";
+            }
+            diag " want stderr:";
+            foreach my $w (@orig_diag) {
+                diag "  [$w]";
+            }
+            diag " mismatch details:";
+            foreach my $m (@mismatch) {
+                diag $m;
+            }
+        }
+    }
+
+    if ($stdout ne $want_out) {
+       $ok = 0;
+       diag "want stdout: $want_out";
+       diag "got stdout: $stdout";
+    }
+
+    if ($expect_failed_tests and not $status) {
+        $ok = 0;
+        diag "test script failed to fail";
+    } elsif ($status and not $expect_failed_tests) {
+        $ok = 0;
+        diag "test script unexpectedly failed";
+    }
+
+    ok $ok, $name;
 }
 
 =head2 I<test_test>

@@ -1,6 +1,6 @@
 ---
 name: Test-Group
-version: 0.15_01
+version: 0.15_02
 author:
   - 'Nick Cleaton <ncleaton@cpan.org>'
   - 'Dominique Quatravaux <domq@cpan.org>'
@@ -26,7 +26,7 @@ configure_requires:
 provides:
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.15_01
+    version: 0.15_02
 generated_by: Module::Build version 0.35
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html

@@ -55,7 +55,7 @@ like scalar($perl->stderr()), qr/failed.*sub test blah/i, "another subtest faile
 like scalar($perl->stderr()), qr/failed 1 test.* of 1/,
     "1 test total despite multiple failures";
 
-is $perl->run(stdin => <<'EOSCRIPT') >> 8, 1, "empty test group fails";
+ok $perl->run(stdin => <<'EOSCRIPT') >> 8, "empty test group fails";
 use Test::More tests => 2;
 use Test::Group;
 test      "empty group", sub {

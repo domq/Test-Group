@@ -7,27 +7,19 @@ use warnings;
 
 =cut
 
-use Test::More;
+use Test::More tests => 1;
 use Test::Group;
 use lib "t/lib";
 use testlib;
 
-my @preds = qw(foobar_ok foobar_ok_b foobar_ok_bg foobar_ok_bgb);
-plan tests => 3 + 4*@preds;
-
-my $preamble = <<'EOSCRIPT';
+my $script = '#line '.__LINE__."\n".<<'EOSCRIPT';
 use strict;
 use warnings;
 
-use Test::More tests => 2*4;
 use Test::Builder;
+use Test::Group;
 
-EOSCRIPT
-
-# foobar_ok: a Test::Group predicate
-$preamble .= get_pod_snippet("foobar_ok");
-
-$preamble .= <<'EOSCRIPT';
+__FOOBAR_OK__
 
 # foobar_ok_b: a predicate on top of foobar_ok, using the standard
 # Test::Builder predicate-within-predicate mechanism.
@@ -35,16 +27,16 @@ sub foobar_ok_b {
     my ($thing, $name) = @_;
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    foobar_ok("woot".$thing, $name);
+    foobar_ok($thing, "$name");
 }
 
 # foobar_ok_bg: a Test::Group predicate on top of foobar_ok_b
 sub foobar_ok_bg {
     my ($text, $name) = @_;
     $name ||= "foobar_ok_bg";
-    local $Test::Group::InPredicate = 1;
     local $Test::Group::Level = $Test::Group::Level + 1;
     test $name => sub {
+        local $Test::Group::InPredicate = 1;
         ok "foo", "foo is true";
         foobar_ok_b($text, $name);
         ok "bar", "bar is true";
@@ -56,56 +48,54 @@ sub foobar_ok_bgb {
     my ($thing, $name) = @_;
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    foobar_ok_bg("woot".$thing, $name);
+    foobar_ok_bg($thing, $name);
 }
 
-# Try each predicate passing
-foobar_ok(    "foobar", "test 1");
-foobar_ok_b(  "foobar", "test 2");
-foobar_ok_bg( "foobar", "test 3");
-foobar_ok_bgb("foobar", "test 4");
+
+foreach my $pred (qw(foobar_ok foobar_ok_b foobar_ok_bg foobar_ok_bgb)) {
+    # Try the predicate passing
+    want_test(1, "pass $pred");
+    { no strict 'refs' ; &$pred("foobar", "pass $pred") };
+
+    # Try the predicate failing
+    want_test(0, "fail $pred", 
+        fail_diag("bar ok"),
+        q{-re^\s*'foobaz'$},
+        q{-re\bdoesn't match\b},
+          # An extra layer of Test::Group means an extra fail diag:
+          ( $pred =~ /_bg/ ? fail_diag("fail $pred") : () ),
+        '',
+        fail_diag("fail $pred", 1, __LINE__+2),
+    );
+    { no strict 'refs' ; &$pred("foobaz", "fail $pred") };
+
+    # Passing in a group
+    want_test(1, "pass group$pred");
+    test "pass group$pred" => sub {
+        no strict 'refs' ; &$pred("foobar", "pass $pred");
+    };
+
+    # Failing in a group
+    want_test(0, "fail group$pred", 
+        fail_diag("bar ok"),
+        q{-re^\s*'foobaz'$},
+        q{-re\bdoesn't match\b},
+          # An extra layer of Test::Group means an extra fail diag:
+          ( $pred =~ /_bg/ ? fail_diag("fail $pred") : () ),
+        fail_diag("fail $pred", 0, __LINE__+5),
+        '',
+        fail_diag("fail group$pred", 1, __LINE__+4),
+    );
+    test "fail group$pred" => sub {
+        no strict 'refs' ; &$pred("foobaz", "fail $pred");
+    };
+}
+
 
 EOSCRIPT
 
-my ($ret, $out, $errbits, $linenums) = run_testscript_segments(
-    $preamble,
-    '
-    foobar_ok(    "foobaz", "xfoobar_ok");     linename("foobar_ok");
-    ','
-    foobar_ok_b(  "foobaz", "xfoobar_ok_b");   linename("foobar_ok_b");
-    ','
-    foobar_ok_bg( "foobaz", "xfoobar_ok_bg");  linename("foobar_ok_bg");
-    ','
-    foobar_ok_bgb("foobaz", "xfoobar_ok_bgb"); linename("foobar_ok_bgb");
-    ', ''
-);
+my $foobar_ok = get_pod_snippet("foobar_ok");
+$script =~ s/__FOOBAR_OK__/$foobar_ok/;
 
-ok $ret >> 8, "test script failed";
-
-is $out, <<EOOUT, "test script stdout";
-1..8
-ok 1 - test 1
-ok 2 - test 2
-ok 3 - test 3
-ok 4 - test 4
-not ok 5 - xfoobar_ok
-not ok 6 - xfoobar_ok_b
-not ok 7 - xfoobar_ok_bg
-not ok 8 - xfoobar_ok_bgb
-EOOUT
-
-is shift @$errbits, '', "preamble no stderr";
-
-foreach my $i (0 .. $#preds) {
-    my $line = $linenums->{$preds[$i]};
-    ok $line, "got $preds[$i] linenum";
-    like $errbits->[$i],
-        qr/Failed test 'x$preds[$i]'/,
-        "$preds[$i] fail message";
-    like $errbits->[$i],
-        qr/\bat \S+ line $line\b/,
-        "$preds[$i] fail line number";
-    my @linewords = $errbits->[$i] =~ /(line)/gi;
-    is scalar @linewords, 1, "$preds[$i] no stray line numbers";
-}
+testscript_ok($script, 16);
 
