@@ -43,9 +43,10 @@ only.
 
 =item I<want_test($pass, $name, @diag)>
 
-Declares that the next test will pass or fail according to C<$pass>,
-will have name C<$name> (or will be nameless if C<$name> is undef)
-and will produce the diagnostic output lines listed in C<@diag>.
+Declares that the next test will pass or fail according to C<$pass>
+(1 for pass, 0 for fail, 2 for skip), will have name C<$name> (or will
+be nameless if C<$name> is undef) and will produce the diagnostic
+output lines listed in C<@diag>.
 
 The expected diagnostic lines are treated as strings for an exact
 match, unless they have C<-re> prepended, in which case they are
@@ -147,8 +148,13 @@ EOSCRIPT
                   map { $_ eq 'undef' ? undef : pack 'H*', $_} split /,/, $1;
         my @orig_diag = @diag;
 
-        my $out = ($pass ? '' : 'not ') . 'ok ' . ($i+1);
-        defined $name and $out .= " - $name";
+        my $out = ($pass == 0 ? 'not ' : '') . 'ok ' . ($i+1);
+        if ($pass == 2) {
+            $out .= " # skip";
+            defined $name and $out .= " $name";
+        } else {
+            defined $name and $out .= " - $name";
+        }
         $want_out .= "$out\n";
 
         $pass or ++$expect_failed_tests;

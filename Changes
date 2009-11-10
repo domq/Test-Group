@@ -1,9 +1,10 @@
 Revision history for Test-Group
 
-0.15_02 2009-11-05 (Nick Cleaton)
+0.15_03 2009-11-10 (Nick Cleaton)
       - Fix failing test line numbers in predicates and wrappers
       - Allow verbose level to be set via an environment variable
       - Some test suite improvements
+      - Added a plugin interface
 
 0.15    2009-10-22 (Nick Cleaton)
       - Fix a failing test on some platforms

@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.15_02
+Test::Group version 0.15_03
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.15_02';
+$VERSION = '0.15_03';
 
 =head1 SYNOPSIS
 
@@ -263,6 +263,11 @@ one to be found in L</SYNOPSIS>) will succeed as expected:
 
 =for tests "TODO gotcha 2" end
 
+=head2 PLUGIN INTERFACE
+
+A simple plugin interface allows module authors to write extensions
+to I<Test::Group>.  See L<Test::Group::Extending> for details.
+
 =cut
 
 use 5.004;
@@ -282,6 +287,7 @@ my $classstate_testonly_criteria = sub { 1 };
 my $classstate_catchexceptions = 1;
 my $classstate_logfile;
 my $classstate_logfd;
+my @classstate_plugins;
 
 our $Level = 0;
 our $InPredicate;
@@ -294,11 +300,12 @@ script. They are all exported by default.
 =cut
 
 use Exporter;
-use vars qw(@ISA @EXPORT);
-@ISA    = qw(Exporter);
-@EXPORT = qw(test skip_next_test skip_next_tests
-             begin_skipping_tests end_skipping_tests
-             test_only);
+use vars qw(@ISA @EXPORT @EXPORT_OK);
+@ISA       = qw(Exporter);
+@EXPORT    = qw(test skip_next_test skip_next_tests
+                begin_skipping_tests end_skipping_tests
+                test_only);
+@EXPORT_OK = qw(next_test_plugin);
 
 =head3 test ($name, $groupsub)
 
@@ -496,6 +503,24 @@ sub test_only (;$$) {
     }
 }
 
+=head2 PLUGIN FUNCTIONS
+
+The following function relates to the plugin interface. It is not
+exported be default.  See L<Test::Group::Extending> for details.
+
+=head3 next_test_plugin ( PLUGIN )
+
+Installs a plugin for the next test group. PLUGIN must be a
+subroutine reference.
+
+=cut
+
+sub next_test_plugin (&) {
+    my $plugin = shift;
+
+    push @classstate_plugins, $plugin;
+}
+
 =head1 CLASS METHODS
 
 A handful of class methods are available to tweak the behavior of this
@@ -627,6 +652,9 @@ into L</subtests>.  Invoking C<< ->new($name, $sub) >> then C<<
 except that I<test()> additionally passes along the test group results
 to L<Test::Builder>.
 
+If any plugins have been set, they are applied to the test group and
+the list of plugins is cleared.
+
 =cut
 
 sub run {
@@ -645,11 +673,17 @@ sub run {
     Test::Builder->new->diag("Running group of tests - $self->{name}")
         if ($classstate_verbose);
 
+    my $code = $self->{code};
+    if (my @plugins = @classstate_plugins) {
+        $code = sub { $self->_run_code_via_plugins(@plugins) };
+        @classstate_plugins = ();
+    }
+
     my ($exn);
 
     $self->_hijack();    # BEGIN CRITICAL SECTION
     my $exception_raised = !
-        $self->_run_with_local_TODO($self->{callerpackage}, $self->{code});
+        $self->_run_with_local_TODO($self->{callerpackage}, $code);
     $self->_unhijack();  # END CRITICAL SECTION
 
     if ($exception_raised) {
@@ -1091,6 +1125,28 @@ sub _run_with_local_TODO {
     my $retval = eval { $sub->(); 1; };
     $$TODOref = $TODOorig;
     return $retval;
+}
+
+=head3 _run_code_via_plugins (@plugins)
+
+Invokes the subroutine reference stored as C<$self->{code}> via
+the chain of plugins in C<@plugins>.
+
+=cut
+
+sub _run_code_via_plugins {
+    my ($self, $plugin, @more) = @_;
+
+    if ($plugin) {
+        my $old_inp = $InPredicate;
+        local $InPredicate = 1;
+        $plugin->(sub{
+            local $InPredicate = $old_inp;
+            $self->_run_code_via_plugins(@more);
+        });
+    } else {
+        $self->{code}->();
+    }
 }
 
 =head3 _skip ($reason)

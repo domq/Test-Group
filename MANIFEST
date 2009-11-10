@@ -2,6 +2,7 @@ Build.PL
 Changes
 examples/test-group.t
 lib/Test/Group.pm
+lib/Test/Group/Extending.pod
 Makefile.PL
 MANIFEST			This list of files
 README
@@ -16,6 +17,9 @@ t/50-error-reporting.t
 t/55-predicates.t
 t/56-wrappers.t
 t/60-verbose2.t
+t/65-extending.t
+t/70-plugin-plan.t
+t/71-plugin-foreach.t
 t/lib/Test/Cmd.pm
 t/lib/testlib.pm
 t/maintainer/dependencies.t
