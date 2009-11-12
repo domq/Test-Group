@@ -19,7 +19,7 @@ use testlib;
 
 
 my %snips = map { ( $_ => get_pod_snippet("synopsis-$_") ) }
-    (qw(success fail misc TODO));
+    (qw(success fail die misc TODO));
 
 # We already have a plan:
 $snips{success} =~ s/(no_plan)/; # $1/;
@@ -29,11 +29,14 @@ $snips{misc} =~ s|/tmp/log|File::Spec->devnull|ge;
 
 # Instrument for test:
 foreach (values %snips) {
-    s/^\s+test /\$results[scalar \@results] = test_test /gm
-        or die "Could not find any test in this snippet!";
+  s/^\s*use Test::.*$//gm;
+  s/^\s+test /\$results[scalar \@results] = test_test /gm
+      or die "Could not find any test in this snippet!";
 }
 my (@successes, @failures, @todos);
 ok(eval <<"CODE"); die $@ if $@;
+use Test::Group;
+
 sub I_can_connect { 1 }
 sub I_can_make_a_request { 1 }
 
@@ -43,6 +46,9 @@ $snips{success}
 push(\@successes, \@results); \@results = ();
 
 $snips{fail}
+push(\@failures, \@results); \@results = ();
+
+$snips{die}
 push(\@failures, \@results); \@results = ();
 
 $snips{TODO}

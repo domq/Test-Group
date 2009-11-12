@@ -13,14 +13,16 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.15_03
+Test::Group version 0.16
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.15_03';
+$VERSION = '0.16';
 
 =head1 SYNOPSIS
+
+Basics:
 
 =for tests "synopsis-success" begin
 
@@ -36,21 +38,47 @@ $VERSION = '0.15_03';
 
 =for tests "synopsis-success" end
 
+Failed subtests are displayed I<before> the result of the test they belong to.
+For instance,
+
 =for tests "synopsis-fail" begin
+
+    use Test::More no_plan => 1;
+    use Test::Group;
 
     test "this test group will fail", sub {
         ok 1, "sub test blah";
-        is "foo", "bar";                    # Oops!
+        is "foo", "bar", "I so wish they were the same...";
         ok 1;
         like   "blah blah blah", qr/bla/;
     };
+
+=for tests "synopsis-fail" end
+
+produces something like this:
+
+    #   Failed test 'I so wish they were the same...'
+    #   in test.pl at line 6.
+    #          got: 'foo'
+    #     expected: 'bar'
+    not ok 1 - this test group will fail
+    #   Failed test 'this test group will fail'
+    #   in test.pl at line 9.
+    1..1
+
+Exceptions in tests are not fatal:
+
+=for tests "synopsis-die" begin
 
     test "this test will fail but the suite will proceed", sub {
         pass;
         die;
     };
 
-=for tests "synopsis-fail" end
+
+=for tests "synopsis-die" end
+
+Test::More style TODO support:
 
 =for tests "synopsis-TODO" begin
 
@@ -68,6 +96,8 @@ $VERSION = '0.15_03';
     };
 
 =for tests "synopsis-TODO" end
+
+Misc:
 
 =for tests "synopsis-misc" begin
 
@@ -262,6 +292,14 @@ one to be found in L</SYNOPSIS>) will succeed as expected:
     }
 
 =for tests "TODO gotcha 2" end
+
+=head2 OUTPUT FORMAT
+
+As seen briefly in L</SYNOPSIS>, only top-level test groups (and toplevel
+Test::More tests if any) produce a single "ok" or "not ok" summary line.  Failed
+sub-tests produce non-scoring comment messages (prefixed with "#"); successful
+sub-tests are silent.  This is different from, and predates, the
+L<Test::More/subtest> functionality.
 
 =head2 PLUGIN INTERFACE
 
