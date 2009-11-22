@@ -15,9 +15,9 @@ WriteMakefile
                            'Exporter' => 0,
                            'Test::More' => 0,
                            'Test::Builder' => 0,
-                           'File::Find' => 0,
-                           'File::Basename' => 0,
-                           'File::Slurp' => 0
+                           'Test::Cmd' => 0,
+                           'File::Slurp' => 0,
+                           'Carp',
                          }
         )
 ;

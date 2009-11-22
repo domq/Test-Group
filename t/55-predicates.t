@@ -8,16 +8,18 @@ use warnings;
 =cut
 
 use Test::More tests => 1;
+use Test::Group::Tester;
 use Test::Group;
 use lib "t/lib";
 use testlib;
 
-my $script = '#line '.__LINE__."\n".<<'EOSCRIPT';
+my $scriptline = __LINE__ ; my $script = <<'EOSCRIPT';
 use strict;
 use warnings;
 
 use Test::Builder;
 use Test::Group;
+use Test::More;
 
 __FOOBAR_OK__
 
@@ -54,36 +56,34 @@ sub foobar_ok_bgb {
 
 foreach my $pred (qw(foobar_ok foobar_ok_b foobar_ok_bg foobar_ok_bgb)) {
     # Try the predicate passing
-    want_test(1, "pass $pred");
+    want_test('pass', "pass $pred");
     { no strict 'refs' ; &$pred("foobar", "pass $pred") };
 
     # Try the predicate failing
-    want_test(0, "fail $pred", 
+    want_test('fail', "fail $pred", 
         fail_diag("bar ok"),
-        q{-re^\s*'foobaz'$},
-        q{-re\bdoesn't match\b},
+        qr/^#\s*'foobaz'$/,
+        qr/\bdoesn't match\b/,
           # An extra layer of Test::Group means an extra fail diag:
           ( $pred =~ /_bg/ ? fail_diag("fail $pred") : () ),
-        '',
         fail_diag("fail $pred", 1, __LINE__+2),
     );
     { no strict 'refs' ; &$pred("foobaz", "fail $pred") };
 
     # Passing in a group
-    want_test(1, "pass group$pred");
+    want_test('pass', "pass group$pred");
     test "pass group$pred" => sub {
         no strict 'refs' ; &$pred("foobar", "pass $pred");
     };
 
     # Failing in a group
-    want_test(0, "fail group$pred", 
+    want_test('fail', "fail group$pred", 
         fail_diag("bar ok"),
-        q{-re^\s*'foobaz'$},
-        q{-re\bdoesn't match\b},
+        qr/^#\s*'foobaz'$/,
+        qr/\bdoesn't match\b/,
           # An extra layer of Test::Group means an extra fail diag:
           ( $pred =~ /_bg/ ? fail_diag("fail $pred") : () ),
-        fail_diag("fail $pred", 0, __LINE__+5),
-        '',
+        fail_diag("fail $pred", 0, __LINE__+4),
         fail_diag("fail group$pred", 1, __LINE__+4),
     );
     test "fail group$pred" => sub {
@@ -95,7 +95,8 @@ foreach my $pred (qw(foobar_ok foobar_ok_b foobar_ok_bg foobar_ok_bgb)) {
 EOSCRIPT
 
 my $foobar_ok = get_pod_snippet("foobar_ok");
-$script =~ s/__FOOBAR_OK__/$foobar_ok/;
+my $hashline = "#line ".($scriptline+8)."\n";
+$script =~ s/__FOOBAR_OK__/$foobar_ok\n$hashline/;
 
 testscript_ok($script, 16);
 

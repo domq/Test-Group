@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.16
+Test::Group version 0.16_01
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.16';
+$VERSION = '0.16_01';
 
 =head1 SYNOPSIS
 

@@ -74,10 +74,10 @@ literal code block.
 
 =head1 PLUGINS
 
-L<Test::Group> provides the function next_test_plugin() (not exported
-by default) to install a plugin for the next test group.  A plugin is
-a subroutine that sits in between Test::Group::test() and the
-subroutine reference passed to it.
+From version 0.16 onwards, L<Test::Group> provides the function
+next_test_plugin() (not exported by default) to install a plugin for
+the next test group.  A plugin is a subroutine that sits in between
+Test::Group::test() and the subroutine reference passed to it.
 
 The next_test_plugin() function takes a single parameter, which must
 be a subroutine reference. That subroutine will be called with a
@@ -90,6 +90,7 @@ the PATH environment variable could be implemented like this:
 =for tests "next_test_nopathchange" begin
 
   use Test::Group qw(:DEFAULT next_test_plugin);
+  use Test::More;
 
   sub next_test_nopathchange {
       next_test_plugin {
@@ -111,8 +112,8 @@ To use this plugin from a test script:
       do_my_tests('foo');
   };
 
-Another example - the following plugin runs the test group twice, with and
-without a DEBUG environment variable set:
+Another example - the following plugin runs the test group twice, with
+and without a DEBUG environment variable set:
 
 =for tests "next_test_with_and_without_debug" begin
 
@@ -141,8 +142,8 @@ In a test script, you might apply both plugins to the same test group:
 
 When multiple plugins have been set, the one that was set first gets
 control first.  In the example above, the DEBUG plugin will be called
-first, and each time it calls C<$next->()> control passes to the
-PATH plugin.  When the PATH plugin calls C<$next->()>, control gets
+first, and each time it calls C<< $next->() >> control passes to the
+PATH plugin.  When the PATH plugin calls C<< $next->() >>, control gets
 down to do_my_tests().
 
 If you want to apply the same set of plugins to several groups in your
@@ -168,5 +169,11 @@ them up:
 
 =for tests "mytest" end
 
+=head1 SEE ALSO
+
+L<Test::Group>
+
+L<Test::Group::Tester> helps you to write tests for L<Test::Group>
+extensions.
 
 =cut

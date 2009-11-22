@@ -28,18 +28,13 @@ my $builder = Module::Build->new
        'Exporter'     => 0,
        'Test::Simple' => 0.59,  # Test::Builder->create() needed
        'Test::Builder' => 0,
+       'Test::Cmd' => 0,
        'File::Spec' => 0,
        'IO::File' => 0,
+       'Carp' => 0,
       },
       build_requires     =>
       {
-       # A copy of Test::Cmd is bundled in t/lib to cut down on
-       # dependencies and make Test::Group easier to install.
-       # Therefore Test::Cmd does not get installed, but it has
-       # dependencies of its own:
-       'File::Find' => 0,
-       'File::Basename' => 0,
-       # The test suite has its own set of dependencies:
        'Test::More' => 0,
        'File::Slurp' => 0,
        'File::Temp' => 0,
