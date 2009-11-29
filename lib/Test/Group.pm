@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.16_01
+Test::Group version 0.16_02
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.16_01';
+$VERSION = '0.16_02';
 
 =head1 SYNOPSIS
 
@@ -305,6 +305,10 @@ L<Test::More/subtest> functionality.
 
 A simple plugin interface allows module authors to write extensions
 to I<Test::Group>.  See L<Test::Group::Extending> for details.
+
+The following extensions are distributed with I<Test::Group>:
+
+L<Test::Group::Plan>, L<Test::Group::NoWarnings> 
 
 =cut
 

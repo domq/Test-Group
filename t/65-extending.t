@@ -91,18 +91,18 @@ testscript_ok("$snip2\n#line ".(__LINE__+1)."\n".<<'EOSCRIPT', 2, "timed_test");
 use Test::More;
 
 want_test('pass', 'timed_pass_outer',
-    qr/timed_pass_outer start: \d+\.\d+/,
-    qr/timed_pass_outer done:  \d+\.\d+/,
+    qr/timed_pass_outer start: \d+/,
+    qr/timed_pass_outer done:  \d+/,
 );
 timed_test timed_pass_outer => sub {
     ok 1, 'timed_pass_inner';
 };
 
 want_test('fail', 'timed_fail_outer',
-    qr/timed_fail_outer start: \d+\.\d+/,
+    qr/timed_fail_outer start: \d+/,
     fail_diag('timed_fail_inner', 0, __LINE__+5),
     fail_diag('timed_fail_outer', 1, __LINE__+5),
-    qr/timed_fail_outer done:  \d+\.\d+/,
+    qr/timed_fail_outer done:  \d+/,
 );
 timed_test timed_fail_outer => sub {
     ok 0, 'timed_fail_inner';
