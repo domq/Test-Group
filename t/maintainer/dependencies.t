@@ -435,7 +435,7 @@ sub compare_dependencies_ok {
 
     foreach my $notfound (grep {! $expected{$_}} (keys %got)) {
         foreach my $match (@{$gothashref->{$notfound}}) {
-            diag(sprintf("%s seems to be be referenced in %s line %d\n",
+            diag(sprintf("%s seems to be referenced in %s line %d\n",
                          $notfound, $match->{file}, $match->{line}));
         }
     }

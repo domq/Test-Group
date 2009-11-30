@@ -23,7 +23,7 @@ This module is an extension for L<Test::Group>.  It allows you to
 trap warnings generated during a test group and convert them to
 test failures.
 
-If you are not already familiar with with L<Test::Group> now would be
+If you are not already familiar with L<Test::Group> now would be
 a good time to go take a look.
 
 See also L<Test::NoWarnings>, which does something similar for the

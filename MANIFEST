@@ -31,6 +31,7 @@ t/maintainer/dependencies.t
 t/maintainer/kwalitee.t
 t/maintainer/nobreakpoints.t
 t/maintainer/nodebugwords.t
+t/maintainer/norepeatedwords.t
 t/maintainer/pod-coverage.t
 t/maintainer/pod-source.t
 t/maintainer/pod.t

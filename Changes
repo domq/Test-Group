@@ -1,5 +1,9 @@
 Revision history for Test-Group
 
+0.17    2009-11-30
+      - Added Test::Group::Tester, use it in Test::Group's tests
+      - Added Test::Group::Plan and Test::Group::NoWarnings extensions
+
 0.16    2009-11-12
       - Fix failing test line numbers in predicates and wrappers
       - Allow verbose level to be set via an environment variable

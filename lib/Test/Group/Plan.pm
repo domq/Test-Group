@@ -22,7 +22,7 @@ Test::Group::Plan - test plans for test groups
 This module is an extension for L<Test::Group>.  It allows you to
 declare the number of tests that a particular group will run.
 
-If you are not already familiar with with L<Test::Group> now would be
+If you are not already familiar with L<Test::Group> now would be
 a good time to go take a look.
 
 By default, L<Test::Group> doesn't care how many tests you run within

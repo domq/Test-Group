@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.16_02
+Test::Group version 0.17
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.16_02';
+$VERSION = '0.17';
 
 =head1 SYNOPSIS
 
@@ -477,7 +477,7 @@ Equivalent to:
 
 =head3 begin_skipping_tests ()
 
-    begin_skipping_tests
+    begin_skipping_tests;
     begin_skipping_tests "reason";
 
 Skips all subsequent groups of tests until blocked by
