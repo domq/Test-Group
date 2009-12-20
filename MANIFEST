@@ -26,6 +26,9 @@ t/65-extending.t
 t/70-plugin-plan.t
 t/71-plugin-foreach.t
 t/75-plugin-nowarnings.t
+t/80-subtest-external.t
+t/81-subtest-output.t
+t/82-subtest-predicate.t
 t/lib/testlib.pm
 t/maintainer/dependencies.t
 t/maintainer/kwalitee.t

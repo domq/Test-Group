@@ -36,7 +36,7 @@ sub foobar_ok_b {
 sub foobar_ok_bg {
     my ($text, $name) = @_;
     $name ||= "foobar_ok_bg";
-    local $Test::Group::Level = $Test::Group::Level + 1;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     test $name => sub {
         local $Test::Group::InPredicate = 1;
         ok "foo", "foo is true";

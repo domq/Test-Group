@@ -8,28 +8,33 @@ test diagnostics come out right.
 
 =cut
 
-use Test::More tests => 1;
+use Test::More tests => 4;
 use Test::Group::Tester;
 
-testscript_ok('#line '.(__LINE__+1)."\n".<<'EOSCRIPT', 3);
+# Try various combinations of using $Test::Builder::Level and
+# $Test::Group::Level.
+
+foreach my $level_var_1 (qw(Group Builder)) {
+    foreach my $level_var_2 (qw(Group Builder)) {
+        testscript_ok('#line '.(__LINE__+1)."\n".<<EOSCRIPT, 3);
 use strict;
 use warnings;
 
 use Test::Group;
 use Test::More;
 
-sub test2 ($&) {
-    my ($name, $code) = @_;
+sub test2 (\$&) {
+    my (\$name, \$code) = \@_;
 
-    local $Test::Group::Level = $Test::Group::Level + 1;
-    &test($name, $code);
+    local \$Test::$level_var_1\::Level = \$Test::$level_var_1\::Level + 1;
+    &test(\$name, \$code);
 }
 
-sub test3 ($&) {
-    my ($name, $code) = @_;
+sub test3 (\$&) {
+    my (\$name, \$code) = \@_;
 
-    local $Test::Group::Level = $Test::Group::Level + 1;
-    &test2($name, $code);
+    local \$Test::$level_var_2\::Level = \$Test::$level_var_2\::Level + 1;
+    &test2(\$name, \$code);
 }
 
 want_test('fail', 'msg_testouter',
@@ -57,4 +62,5 @@ test3 msg_test3outer => sub {
 };
 
 EOSCRIPT
-
+    }
+}

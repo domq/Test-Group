@@ -30,7 +30,7 @@ $snips{misc} =~ s|/tmp/log|File::Spec->devnull|ge;
 # Instrument for test:
 foreach (values %snips) {
   s/^\s*use Test::.*$//gm;
-  s/^\s+test /\$results[scalar \@results] = test_test /gm
+  s/^\s+test /\$results[scalar \@results] = tg_test_test /gm
       or die "Could not find any test in this snippet!";
 }
 my (@successes, @failures, @todos);

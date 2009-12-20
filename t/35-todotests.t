@@ -25,7 +25,7 @@ use warnings;
 {
     my $result = do {
         local $TODO = "tout doux";
-        test_test "todo sub-test (expected failure)" => sub {
+        tg_test_test "todo sub-test (expected failure)" => sub {
             fail;
         };
     };
@@ -41,7 +41,7 @@ Putting "TODO" in the test name also works.
 =cut
 
 {
-    my $result = test_test "TODO in the test name" => sub {
+    my $result = tg_test_test "TODO in the test name" => sub {
         fail;
     };
     ok(! $result->is_failed);
@@ -49,7 +49,7 @@ Putting "TODO" in the test name also works.
     like($result->prints_TODO_string, qr/in the test name/);
 
     # Also works for the empty test:
-    $result = test_test "TODO in the test name" => sub {
+    $result = tg_test_test "TODO in the test name" => sub {
         fail;
     };
     ok(! $result->is_failed);
@@ -64,13 +64,13 @@ The parser is not too stupid.
 =cut
 
 {
-    my $result = test_test "todo in lowercase doesn't count" => sub {
+    my $result = tg_test_test "todo in lowercase doesn't count" => sub {
         pass;
     };
     ok(! $result->is_failed);
     ok(! $result->prints_TODO_string);
 
-    $result = test_test "MASTODON is not TO-DO" => sub { pass };
+    $result = tg_test_test "MASTODON is not TO-DO" => sub { pass };
     ok(! $result->is_failed);
     ok(! defined $result->prints_TODO_string);
 }
@@ -80,7 +80,7 @@ The parser is not too stupid.
 =cut
 
 {
-    my $result = test_test "todo sub-test (unexpected success)" => sub {
+    my $result = tg_test_test "todo sub-test (unexpected success)" => sub {
         pass;
         {
             local $TODO = "Aha, unexpected TODO success!";
@@ -97,7 +97,7 @@ The parser is not too stupid.
 =cut
 
 {
-    my $result = test_test "mixed todo tests (overall success)" => sub {
+    my $result = tg_test_test "mixed todo tests (overall success)" => sub {
         {
             local $TODO = "this needs work";
             fail;
@@ -119,7 +119,7 @@ Failure trumps TODO success.
 =cut
 
 {
-    my $result = test_test "failure trumps todo success" => sub {
+    my $result = tg_test_test "failure trumps todo success" => sub {
         fail;
         { local $TODO = "I'm feeling nauseous now..."; pass; }
     };
@@ -137,7 +137,7 @@ TODO outside of a group even excuses an exception.
 {
     my $result = do {
                   local $TODO = "a good excuse";
-                  test_test "ouch" => sub { die };
+                  tg_test_test "ouch" => sub { die };
                  };
     ok(! $result->is_failed);
     ok(! $result->prints_OK);
@@ -151,7 +151,7 @@ On the other hand, TODO inside of a group doesn't.
 =cut
 
 {
-    my $result = test_test "argl" => sub {
+    my $result = tg_test_test "argl" => sub {
                   local $TODO = "sorry, poor excuse";
                   die;
               };
@@ -171,7 +171,7 @@ Skipping has no effect on TODO tests.
     my $result = do {
                   local $TODO = "unexpected success";
                   skip_next_test("just because I can");
-                  test_test "zoinx" => sub { pass };
+                  tg_test_test "zoinx" => sub { pass };
                  };
     ok($result->is_skipped);
     ok(! $result->is_failed);
@@ -182,7 +182,7 @@ Skipping has no effect on TODO tests.
 =cut
 
 {
-    my $result = test_test "todo and nested failure: outer test" => sub {
+    my $result = tg_test_test "todo and nested failure: outer test" => sub {
         local $TODO = "some excuse";
          test "todo and nested failure: inner test" => sub {
             pass;
@@ -194,7 +194,7 @@ Skipping has no effect on TODO tests.
 }
 
 {
-    my $result = test_test
+    my $result = tg_test_test
       "todo and nested unexpected success: outer test" => sub {
         local $TODO = "unexpected success";
         test "todo and nested unexpected success: inner test" => sub {
@@ -206,7 +206,7 @@ Skipping has no effect on TODO tests.
     ok($result->prints_OK);
 }
 {
-    my $result = test_test "nested-todo failure: outer test" => sub {
+    my $result = tg_test_test "nested-todo failure: outer test" => sub {
         test "nested todo failure: inner test" => sub {
            local $TODO = "some excuse";
            fail;
@@ -216,7 +216,7 @@ Skipping has no effect on TODO tests.
     ok(! $result->prints_OK);
 }
 {
-    my $result = test_test
+    my $result = tg_test_test
       "nested-todo unexpected success: outer test" => sub {
         test "nested todo unexpected success: inner test" => sub {
            local $TODO = "unexpected success";
@@ -252,7 +252,7 @@ TEST_CASE
 
 {
     my $code = get_pod_snippet("TODO gotcha");
-    $code =~ s/test/test_test/;
+    $code =~ s/test/tg_test_test/;
     my $result = eval($code); die $@ if $@;
     ok($result->is_failed);
     ok($result->prints_TODO_string);
@@ -267,7 +267,7 @@ TEST_CASE
 
 {
     my $code = get_pod_snippet("TODO correct");
-    $code =~ s/test/test_test/;
+    $code =~ s/test/tg_test_test/;
     my $result = eval($code); die $@ if $@;
     ok(! $result->is_failed);
     ok(! $result->prints_OK, "\"TODO correct\" prints_OK");
@@ -275,7 +275,7 @@ TEST_CASE
 
 {
     my $code = get_pod_snippet("TODO gotcha 2");
-    my $result = test_test "testing TODO gotcha 2" =>
+    my $result = tg_test_test "testing TODO gotcha 2" =>
         sub { eval $code; die $@ if $@ };
     ok(! $result->got_exception);
     ok(! $result->is_failed);
@@ -290,7 +290,7 @@ This is a redux from C<30-synopsis.t>
 
 {
     my $code = get_pod_snippet("synopsis-TODO");
-    my $result = test_test "testing synopsis-TODO" =>
+    my $result = tg_test_test "testing synopsis-TODO" =>
         sub { eval $code; die $@ if $@ };
     ok(! $result->got_exception);
     ok(! $result->is_failed);

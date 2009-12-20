@@ -141,7 +141,7 @@ test_plan 3, badplan_badtests => sub {
 sub foobar_ok {
     my ($text, $name) = @_;
     $name ||= "foobar_ok";
-    local $Test::Group::Level = $Test::Group::Level + 1;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     test $name => sub {
        local $Test::Group::InPredicate = 1;
        ok $text =~ /foo/, "foo ok";
@@ -199,7 +199,7 @@ test_plan 3, badplan_badtests_fb => sub {
 sub foobar_ok_p {
     my ($text, $name) = @_;
     $name ||= "foobar_ok";
-    local $Test::Group::Level = $Test::Group::Level + 1;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     test_plan 3, $name => sub {
        local $Test::Group::InPredicate = 1;
        ok $text =~ /foo/, "foo ok";

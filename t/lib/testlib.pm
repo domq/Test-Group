@@ -28,24 +28,24 @@ sub perl_cmd {
          workdir => '');
 }
 
-=head2 I<test_test>
+=head2 I<tg_test_test>
 
 Works like L<Test::Group/test>, except that the result of the test is
 not sent upwards to L<Test::Builder> but instead returned as a
 reference to an instance of <Test::Group/Test::Group::_Runner internal
 class>. E.g. here is how to check that a test group does B<not> pass:
 
-   my $status = test_test "foo" => sub {
+   my $status = tg_test_test "foo" => sub {
       # ...
    };
    ok($status->is_failed);
 
-Also, test diagnostics are suppressed in I<test_test> unless
+Also, test diagnostics are suppressed in I<tg_test_test> unless
 $ENV{DEBUG} is set.
 
 =cut
 
-sub test_test ($&) {
+sub tg_test_test ($&) {
     my ($name, $sub) = @_;
 
     # This is just a dummy adapter to protect the test suite

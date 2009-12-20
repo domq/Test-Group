@@ -46,7 +46,7 @@ rest of the time)
 
 =cut
 
-my $result = test_test "outer test" => sub {
+my $result = tg_test_test "outer test" => sub {
     begin_skipping_tests;
     test "skipped 1" => sub { die };
     test "skipped 2" => sub { die };

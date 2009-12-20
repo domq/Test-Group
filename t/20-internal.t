@@ -21,7 +21,7 @@ test "success" => sub {
 };
 
 
-my $status = test_test "failure" => sub {
+my $status = tg_test_test "failure" => sub {
     ok(1);
     ok(1);
     ok(0);
@@ -30,13 +30,13 @@ my $status = test_test "failure" => sub {
 
 ok($status->is_failed, "failed test");
 
-$status = test_test "exception" => sub {
+$status = tg_test_test "exception" => sub {
     die;
 };
 ok($status->is_failed, "exception causes failure");
 ok(! $status->prints_OK);
 
-$status = test_test "empty (shall fail)" => sub { };
+$status = tg_test_test "empty (shall fail)" => sub { };
 ok($status->is_failed, "empty test fails");
 
 test "nested tests" => sub {
@@ -44,7 +44,7 @@ test "nested tests" => sub {
     test "true" => sub { pass };
 };
 
-$status = test_test "nested failed tests" => sub {
+$status = tg_test_test "nested failed tests" => sub {
     test "true" => sub { pass };
     test "false" => sub { is("foo", "bar") };
     test "dies" => sub { die };

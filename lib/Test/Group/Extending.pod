@@ -40,16 +40,16 @@ Test::Group::test(), because it avoids creating a new subroutine call
 frame and messing up the line numbers in failed test diagnostics.
 
 Sometimes you can't use C<goto &test>, because you want to add some
-code after the test() call. For this situation L<Test::Group> provides
-C<$Test::Group::Level> to correct the line numbers in failed test
-diagnostics. This is similar to the C<$Test::Builder::Level> variable
-in L<Test::Builder>.
+code after the test() call.  In this situation you can adjust the
+line numbers in failed test diagnostics by incrementing
+C<$Test::Builder::Level>, see L<Test::Builder>.
 
 The following example outputs a timestamp diagnostic before and after
 running the test group:
 
 =for tests "timed_test" begin
 
+  use Test::Builder;
   use Test::Group;
   use Test::More;
   use Time::HiRes;
@@ -59,7 +59,7 @@ running the test group:
 
       diag("$name start: ".Time::HiRes::time());
 
-      local $Test::Group::Level = $Test::Group::Level + 1;
+      local $Test::Builder::Level = $Test::Builder::Level + 1;
       &test($name, $code);
 
       diag("$name done:  ".Time::HiRes::time());

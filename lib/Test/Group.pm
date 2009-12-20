@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.17
+Test::Group version 0.17_01
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.17';
+$VERSION = '0.17_01';
 
 =head1 SYNOPSIS
 
@@ -206,12 +206,13 @@ predicates is straightforward with I<Test::Group>.  For example,
 
 =for tests "foobar_ok" begin
 
+    use Test::Builder;
     use Test::Group;
 
     sub foobar_ok {
         my ($text, $name) = @_;
         $name ||= "foobar_ok";
-        local $Test::Group::Level = $Test::Group::Level + 1;
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
         test $name => sub {
            local $Test::Group::InPredicate = 1;
            like($text, qr/foo/, "foo ok");
@@ -228,12 +229,11 @@ predicate (in particular, it always counts for a single test, honors
 L<Test::More/TODO: BLOCK> constructs, etc); and of course, users of
 I<Test::Group> can freely call I<foobar_ok> from within a group.
 
-Adding 1 to C<$Test::Group::Level> causes the location of the call to
-foobar_ok() to be shown if a test fails, rather than the location of
-the test() call within foobar_ok().
+Adding 1 to C<$Test::Builder::Level> causes the location of the call
+to foobar_ok() to be shown if a test fails, see L<Test::Builder>.
 
 Setting C<$Test::Group::InPredicate> to a true value prevents the
-location of individual failing subtests within test groups from being
+location of individual failing tests within test groups from being
 shown.
 
 =head2 TODO Tests
@@ -241,7 +241,7 @@ shown.
 As shown in L</SYNOPSIS>, L<Test::More>'s concept of TODO tests is
 supported by I<Test::Group>: a group is in TODO state if the $TODO
 variable is set by the time it starts, or if the test name contains
-the word C<TODO>.  Note, however, than setting $TODO from B<inside>
+the word C<TODO>.  Note, however, that setting $TODO from B<inside>
 the test group (that is, B<after> the group starts) will not do what
 you mean:
 
@@ -301,6 +301,10 @@ sub-tests produce non-scoring comment messages (prefixed with "#"); successful
 sub-tests are silent.  This is different from, and predates, the
 L<Test::More/subtest> functionality.
 
+However, if you enable the experimental L</use_subtest> feature then
+I<Test::Group> will use the same underlying mechanism as
+L<Test::More/subtest> and produce very similar output.
+
 =head2 PLUGIN INTERFACE
 
 A simple plugin interface allows module authors to write extensions
@@ -330,8 +334,13 @@ my $classstate_catchexceptions = 1;
 my $classstate_logfile;
 my $classstate_logfd;
 my @classstate_plugins;
+my $classstate_use_subtest;
 
 our $Level = 0;
+# $Test::Group::Level is effectively added to $Test::Builder::Level.
+# Do not use it, it is present for backward compatibility only.
+# Use $Test::Builder::Level instead.
+
 our $InPredicate;
 
 =head2 FUNCTIONS
@@ -444,6 +453,8 @@ MESSAGE
         $name = "*died* $name";
     }
 
+    return $subTest->{result} if exists $subTest->{result};
+
     no warnings "redefine";
     my ($OK, $TODO_string) = $subTest->as_Test_Builder_params;
     # I tried to put a "local $TODO = " here, but that didn't work and
@@ -548,11 +559,11 @@ sub test_only (;$$) {
 =head2 PLUGIN FUNCTIONS
 
 The following function relates to the plugin interface. It is not
-exported be default.  See L<Test::Group::Extending> for details.
+exported by default.  See L<Test::Group::Extending> for details.
 
-=head3 next_test_plugin ( PLUGIN )
+=head3 next_test_plugin ($plugin)
 
-Installs a plugin for the next test group. PLUGIN must be a
+Installs a plugin for the next test group. I<$plugin> must be a
 subroutine reference.
 
 =cut
@@ -630,6 +641,42 @@ sub logfile {
     $classstate_logfile  = shift;
     $classstate_logfd    = new IO::File("> $classstate_logfile") or
         die "Cannot open $classstate_logfile";
+}
+
+=head2 use_subtest ()
+
+This feature is experimental.
+
+Causes I<Test::Group> to use L<Test::Builder>'s subtest() feature as
+the test aggregation method, rather than doing black magic behind the
+scenes.
+
+It is a fatal error to call use_subtest() if L<Test::Builder> is too
+old to support subtests.  To use subtests if they are available but
+fall back to normal operation if they are not, you can do:
+
+  eval { Test::Group->use_subtest };
+
+I<Test::Group>'s exception handling mechanism is bypassed under
+use_subtest(), since Test::Builder::subtest() has its own exception
+handling system.
+
+=cut
+
+sub use_subtest {
+    Test::Builder->new->can('subtest') or die
+                                "Test::Builder too old for use_subtest()\n";
+    $classstate_use_subtest = 1;
+}
+   
+=head2 no_subtest ()
+
+Turns off use_subtest.
+
+=cut
+
+sub no_subtest {
+    $classstate_use_subtest = 0;
 }
 
 =begin internals
@@ -721,18 +768,37 @@ sub run {
         @classstate_plugins = ();
     }
 
-    my ($exn);
+    if ($classstate_use_subtest) {
+        my $level = $Test::Builder::Level + $Level + 1;
+        local $Test::Builder::Level = $level;
+        $self->{result} = Test::Builder->new->subtest(
+            $self->{name} => sub {
+                $code->();
+                Test::Builder->new->done_testing;
 
-    $self->_hijack();    # BEGIN CRITICAL SECTION
-    my $exception_raised = !
-        $self->_run_with_local_TODO($self->{callerpackage}, $code);
-    $self->_unhijack();  # END CRITICAL SECTION
+                # Work around a flaw in Test::Builder 0.94, see
+                # http://code.google.com/p/test-more/issues/detail?id=58
+                $Test::Builder::Level = $level + 2;
+            }
+        );
+    } else {
+        # Reset $Test::Builder::Level to the default when running the inner
+        # test code. Otherwise, the file/line diagnostics of failing tests
+        # within the group would be messed up if test() is called with a
+        # non-default $Test::Builder::Level value.
+        local $Test::Builder::Level = 1;
 
-    if ($exception_raised) {
-        if ($classstate_catchexceptions) {
-            $self->_record_exception();
-        } else {
-            die $@; # Rethrow
+        $self->_hijack();    # BEGIN CRITICAL SECTION
+        my $exception_raised = !
+            $self->_run_with_local_TODO($self->{callerpackage}, $code);
+        $self->_unhijack();  # END CRITICAL SECTION
+
+        if ($exception_raised) {
+            if ($classstate_catchexceptions) {
+                $self->_record_exception();
+            } else {
+                die $@; # Rethrow
+            }
         }
     }
 
@@ -784,7 +850,7 @@ sub orig_blessed {
 
 Gets or sets the mute status (false by default).  This method is not
 (yet) made visible from L<Test::Group> proper; it is used in the test
-suite (see L<testlib/test_test>) so as not to scare the systems
+suite (see L<testlib/tg_test_test>) so as not to scare the systems
 administrator with lots of (expected) failure messages at C<Build
 test> time.
 
@@ -1282,9 +1348,10 @@ foreach my $delegated (qw(ok skip diag)) {
 This class uses a somewhat unhealthy dose of black magic to take over
 control from L<Test::Builder> when running inside a L</test> group
 sub.  While the temporary re-blessing trick used therein is thought to
-be very robust, it is not very elegant. Some kind of plugin mechanism
-for Test::Builder->new should be designed, implemented and used
-instead.
+be very robust, it is not very elegant.
+
+The experimental use_subtest() feature allows you to avoid the black
+magic if your L<Test::Builder> is recent enough to support subtests.
 
 =head1 SEE ALSO
 
