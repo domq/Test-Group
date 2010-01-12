@@ -1,6 +1,6 @@
 ---
 name: Test-Group
-version: 0.17_01
+version: 0.18
 author:
   - 'Nick Cleaton <ncleaton@cpan.org>'
   - 'Dominique Quatravaux <domq@cpan.org>'
@@ -26,7 +26,7 @@ configure_requires:
 provides:
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.17_01
+    version: 0.18
   Test::Group::NoWarnings:
     file: lib/Test/Group/NoWarnings.pm
     version: 0.01

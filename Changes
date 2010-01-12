@@ -1,8 +1,12 @@
 Revision history for Test-Group
 
+0.18    2010-01-11
+      - Add an option to use Test::Builder's subtest() as the
+        underlying test grouping mechanism.
+      
 0.17    2009-11-30
-      - Added Test::Group::Tester, use it in Test::Group's tests
-      - Added Test::Group::Plan and Test::Group::NoWarnings extensions
+      - Add Test::Group::Tester, use it in Test::Group's tests
+      - Add Test::Group::Plan and Test::Group::NoWarnings extensions
 
 0.16    2009-11-12
       - Fix failing test line numbers in predicates and wrappers
