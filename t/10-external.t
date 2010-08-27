@@ -8,7 +8,7 @@
 
 =cut
 
-use Test::More tests => 33; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::More tests => 36; # Sorry, no_plan not portable for Perl 5.6.1!
 use lib "t/lib";
 use testlib;
 
@@ -66,6 +66,23 @@ is scalar($perl->stdout()), <<EOOUT, "empty test groups";
 1..2
 not ok 1 - empty group
 EOOUT
+
+is $perl->run(stdin => <<'EOSCRIPT') >> 8, 0, "TODO tests";
+use Test::More tests => 2;
+use Test::Group;
+
+test "TODO: this test is not implemented" => sub {
+    fail;
+};
+test "neither is this one" => sub {
+    local $TODO = "UNIMPLEMENTED";
+    fail;
+};
+
+EOSCRIPT
+
+like scalar($perl->stdout()), qr/not ok 1.*# TODO/, "TODO test by the title";
+like scalar($perl->stdout()), qr/not ok 2.*# TODO/, "TODO test w/ local \$TODO";
 
 is $perl->run(stdin => <<'EOSCRIPT') >> 8, 0, "test_only";
 use Test::More tests => 2;

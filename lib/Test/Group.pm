@@ -13,12 +13,12 @@ Test::Group - Group together related tests in a test suite
 
 =head1 VERSION
 
-Test::Group version 0.18
+Test::Group version 0.19
 
 =cut
 
 use vars qw($VERSION);
-$VERSION = '0.18';
+$VERSION = '0.19_01';
 
 =head1 SYNOPSIS
 
@@ -465,6 +465,7 @@ MESSAGE
     # TODO status across to Test::Builder; the trick has an adherence
     # in L</ok>, which see.
     local *Test::Builder::todo = sub { $TODO_string };
+    local *Test::Builder::in_todo = sub { defined($TODO_string) };
     local $Test::Builder::Level = $Test::Builder::Level + $Level;
     $Test->ok($OK, $name);
     return $OK ? 1 : 0;

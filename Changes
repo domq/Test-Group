@@ -1,5 +1,8 @@
 Revision history for Test-Group
 
+0.19    2010-08-27
+      - Fix a compatibility bug with newer Test::Builder
+
 0.18    2010-01-11
       - Add an option to use Test::Builder's subtest() as the
         underlying test grouping mechanism.
