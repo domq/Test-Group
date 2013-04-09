@@ -1,7 +1,7 @@
 Revision history for Test-Group
 
-0.18_1  2013-03-24
-      - Version for CPAN Testers: TODO tests fixed
+0.19    2013-04-09
+      - Fix TODO tests
 
 0.18    2010-01-11
       - Add an option to use Test::Builder's subtest() as the

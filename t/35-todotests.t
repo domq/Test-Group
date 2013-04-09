@@ -7,9 +7,8 @@
 
 =cut
 
-use Test::More tests => 57; # Sorry, no_plan not portable for Perl 5.6.1!
+use Test::More tests => 54; # Sorry, no_plan not portable for Perl 5.6.1!
 use Test::Group;
-use Test::Cmd;
 use lib "t/lib";
 use testlib;
 
@@ -296,46 +295,5 @@ This is a redux from C<30-synopsis.t>
     ok(! $result->got_exception);
     ok(! $result->is_failed);
     ok(! $result->prints_OK);
-}
-
-=head2 RT #84073
-
-A failing TODO test within a test group should make the group
-a TODO failure not a full failure.
-
-=cut
-
-{
-    my $script_source = <<'EOSCRIPT';
-
-use Test::More tests => 2;
-use Test::Group;
-
-test "something" => sub {
-   pass("Ok");
-   TODO: {
-      local $TODO = "this part does not work yet";
-      fail("Expected fail");
-   }
-   pass("Works");
-};
-pass("Works");
-
-EOSCRIPT
-
-    my $perl = Test::Cmd->new
-        (prog => join(' ', $Config{perlpath},
-                      (map { ("-I", $_) } @INC), '-'),
-         workdir => '');
-    $perl or die "Test::Cmd failed";
-
-    my $status = $perl->run(stdin => $script_source);
-    my $stdout = $perl->stdout();
-    my $stderr = $perl->stderr();
-
-    is $status, 0, "failed todo test 0 exit status";
-    like $stdout, qr/not ok 1 - something # TODO this part does not work yet/,
-        "todo message propagated";
-    unlike $stderr, qr/Looks like you failed/, "failed todo test not real fail";
 }
 

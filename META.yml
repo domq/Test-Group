@@ -1,34 +1,26 @@
 ---
-name: Test-Group
-version: 0.18_1
+abstract: 'Group together related tests in a test suite'
 author:
   - 'Nick Cleaton <ncleaton@cpan.org>'
   - 'Dominique Quatravaux <domq@cpan.org>'
-abstract: Group together related tests in a test suite
-license: perl
 build_requires:
   File::Slurp: 0
   File::Spec::Functions: 0
   File::Temp: 0
   Test::More: 0
-requires:
-  Carp: 0
-  Exporter: 0
-  File::Spec: 0
-  IO::File: 0
-  Test::Builder: 0
-  Test::Cmd: 0
-  Test::Simple: 0.59
 configure_requires:
-  Module::Build: 0.340201
-generated_by: Module::Build version 0.340201
+  Module::Build: 0.38
+dynamic_config: 1
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.110440'
+license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
+name: Test-Group
 provides:
   Test::Group:
     file: lib/Test/Group.pm
-    version: 0.18_1
+    version: 0.19
   Test::Group::NoWarnings:
     file: lib/Test/Group/NoWarnings.pm
     version: 0.01
@@ -38,5 +30,14 @@ provides:
   Test::Group::Tester:
     file: lib/Test/Group/Tester.pm
     version: 0.01
+requires:
+  Carp: 0
+  Exporter: 0
+  File::Spec: 0
+  IO::File: 0
+  Test::Builder: 0
+  Test::Cmd: 0
+  Test::Simple: 0.59
 resources:
   license: http://dev.perl.org/licenses/
+version: 0.19
