@@ -22,6 +22,8 @@ BEGIN {
 
 use Test::More tests => 16;
 use Test::Group;
+use lib "t/lib";
+use testlib;
 
 Test::Group->use_subtest;
 
@@ -74,6 +76,7 @@ sub foobar_ok_bgb {
 
 # Try the predicates passing
 foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
+    test_out(skip_any_comments());
     test_out("    ok 1 - foo ok");
     test_out("    ok 2 - bar ok");
     test_out("    1..2");
@@ -84,7 +87,9 @@ foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
     test_test("$predicate passing");
 }
 foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
+    test_out(skip_any_comments());
     test_out("    ok 1 - foo is true");
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo ok");
     test_out("        ok 2 - bar ok");
     test_out("        1..2");
@@ -100,6 +105,7 @@ foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
 
 # Try the predicates failing
 foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
+    test_out(skip_any_comments());
     test_out("    ok 1 - foo ok");
     test_out("    not ok 2 - bar ok");
     test_err("    #   Failed test 'bar ok'");
@@ -118,7 +124,9 @@ foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
     test_test("$predicate failing");
 }
 foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
+    test_out(skip_any_comments());
     test_out("    ok 1 - foo is true");
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo ok");
     test_out("        not ok 2 - bar ok");
     test_err("        #   Failed test 'bar ok'");
@@ -145,6 +153,8 @@ foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
 
 # Try the predicates passing in a group
 foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
+    test_out(skip_any_comments());
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo ok");
     test_out("        ok 2 - bar ok");
     test_out("        1..2");
@@ -160,7 +170,10 @@ foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
     test_test("$predicate passing in group");
 }
 foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
+    test_out(skip_any_comments());
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo is true");
+    test_out(skip_any_comments());
     test_out("            ok 1 - foo ok");
     test_out("            ok 2 - bar ok");
     test_out("            1..2");
@@ -181,6 +194,8 @@ foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
 
 # Try the predicates failing in a group
 foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
+    test_out(skip_any_comments());
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo ok");
     test_out("        not ok 2 - bar ok");
     test_err("        #   Failed test 'bar ok'");
@@ -204,7 +219,10 @@ foreach my $predicate (qw(foobar_ok foobar_ok_b)) {
     test_test("$predicate failing in group");
 }
 foreach my $predicate (qw(foobar_ok_bg foobar_ok_bgb)) {
+    test_out(skip_any_comments());
+    test_out(skip_any_comments());
     test_out("        ok 1 - foo is true");
+    test_out(skip_any_comments());
     test_out("            ok 1 - foo ok");
     test_out("            not ok 2 - bar ok");
     test_err("            #   Failed test 'bar ok'");
