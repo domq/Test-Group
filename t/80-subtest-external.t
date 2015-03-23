@@ -37,7 +37,7 @@ test      "group", sub {
     }
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..1
     ok 1
     ok 2
@@ -64,7 +64,7 @@ test      "group", sub {
     like   "blah blah blah", qr/bli/;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..1
     not ok 1
     not ok 2 - sub test blah
@@ -87,7 +87,7 @@ test      "empty group", sub {
     1;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT, "empty test groups";
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT, "empty test groups";
 1..2
     1..0
 not ok 1 - No tests run for subtest "empty group"
@@ -108,7 +108,7 @@ test      "group 2", sub {
     fail;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..2
     ok 1
     1..1
@@ -134,7 +134,7 @@ test      "other group", sub {
     fail;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..3
     ok 1
     1..1
@@ -163,7 +163,7 @@ test      "other group", sub {
     0;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..3
 ok 1 # skip <reason>
 ok 2 # skip <reason>
@@ -189,7 +189,7 @@ test      "other group", sub {
     0;
 };
 EOSCRIPT
-is scalar($perl->stdout()), <<EOOUT;
+is canonicalize_tap(scalar($perl->stdout())), <<EOOUT;
 1..3
 ok 1 # skip <reason>
 ok 2 # skip <reason>
@@ -223,7 +223,7 @@ test "outer 2" => sub {
 };
 
 EOSCRIPT
-is scalar($perl->stdout()), <<"EOOUT" or warn $perl->stderr;
+is canonicalize_tap(scalar($perl->stdout())), <<"EOOUT" or warn $perl->stderr;
 1..2
         ok 1
         1..1

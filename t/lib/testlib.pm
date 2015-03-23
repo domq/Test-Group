@@ -122,4 +122,29 @@ sub Test::Group::_Runner::is_failed {
     return ! ($self->prints_TODO_string xor $self->prints_OK);
 }
 
+=head2 I<canonicalize_tap()>
+
+Weed out the comments from a TAP output and return it.
+
+=cut
+
+sub canonicalize_tap {
+  my ($tap_output) = @_;
+  $tap_output =~ s/^\s*#.*$(?:\r)?\n//gm;
+  return $tap_output;
+}
+
+=head2 I<skip_any_comments>
+
+Return a regex that skips the line if it is a comment.
+
+For use with L<Test::Builder::Tester/test_out> and
+L<Test::Builder::Tester/test_err>.
+
+=cut
+
+sub skip_any_comments {
+  return qr/(^\s*#.*$(?:\r?)\n)?/m;
+}
+
 1;

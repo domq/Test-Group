@@ -22,10 +22,13 @@ BEGIN {
 
 use Test::More tests => 3;
 use Test::Group;
+use lib "t/lib";
+use testlib;
 
 Test::Group->use_subtest;
 
 {
+    test_out(skip_any_comments());
     test_out("    ok 1 - phew");
     test_out("    1..1");
     test_out("ok 1 - this passes");
@@ -39,6 +42,7 @@ Test::Group->use_subtest;
 {
     my %line;
 
+    test_out(skip_any_comments());
     test_out("    not ok 1 - oops");
     test_err("    #   Failed test 'oops'");
     test_err("    #   at $0 line $line{inner}.");
@@ -57,6 +61,7 @@ Test::Group->use_subtest;
 {
     my %line;
 
+    test_out(skip_any_comments());
     test_out("    not ok 1 - oops");
     test_err("    #   Failed test 'oops'");
     test_err("    #   at $0 line $line{inner}.");
