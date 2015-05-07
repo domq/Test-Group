@@ -1,5 +1,9 @@
 Revision history for Test-Group
 
+0.20    2015-05-07
+      - Fix test failures induced by Test::More now putting
+        comments in the TAP stream (fixes RT #95779)
+
 0.19    2013-04-09
       - Fix TODO tests
 
